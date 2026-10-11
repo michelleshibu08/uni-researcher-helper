@@ -4,7 +4,11 @@ from typing import Literal
 
 import anthropic
 import requests
+from dotenv import load_dotenv
 from pydantic import BaseModel
+
+# Load secret keys from the .env file (git ignores it, so keys never reach GitHub).
+load_dotenv()
 
 PAPER_URL = "https://api.semanticscholar.org/graph/v1/paper/{paper_id}"
 MODEL = "claude-opus-5-5"

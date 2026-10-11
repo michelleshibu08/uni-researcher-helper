@@ -4,8 +4,12 @@ import os
 import time
 
 import requests
+from dotenv import load_dotenv
 
 from citations import format_apa, format_harvard
+
+# Load secret keys from the .env file (git ignores it, so keys never reach GitHub).
+load_dotenv()
 
 SEARCH_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
 MAX_ATTEMPTS = 3
