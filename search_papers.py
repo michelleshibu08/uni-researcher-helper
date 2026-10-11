@@ -5,6 +5,8 @@ import time
 
 import requests
 
+from citations import format_apa, format_harvard
+
 SEARCH_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
 MAX_ATTEMPTS = 3
 # Optional: a free key from Semantic Scholar gives you your own rate limit.
@@ -16,7 +18,7 @@ def search_papers(query, limit=5):
     params = {
         "query": query,
         "limit": limit,
-        "fields": "title,year,authors,venue,citationCount,url",
+        "fields": "title,year,authors,venue,citationCount,url,journal,externalIds",
     }
     headers = {"x-api-key": API_KEY} if API_KEY else {}
     for attempt in range(1, MAX_ATTEMPTS + 1):
@@ -45,6 +47,8 @@ def main():
         print(f"   Venue: {paper.get('venue') or 'unknown'}")
         print(f"   Cited by: {paper.get('citationCount')}")
         print(f"   Link: {paper.get('url')}")
+        print(f"   APA:     {format_apa(paper)}")
+        print(f"   Harvard: {format_harvard(paper)}")
 
 
 if __name__ == "__main__":
