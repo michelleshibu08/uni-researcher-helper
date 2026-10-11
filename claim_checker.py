@@ -1,5 +1,11 @@
-"""Check whether a claim is backed up by a paper, using Claude to compare meaning."""
+"""Check whether a claim is backed up by a paper.
 
+Without an API key it uses free keyword matching. Add ANTHROPIC_API_KEY to your
+.env file and it switches to Claude, which compares meaning instead of words.
+"""
+
+import os
+import re
 from typing import Literal
 
 import anthropic
@@ -12,6 +18,14 @@ load_dotenv()
 
 PAPER_URL = "https://api.semanticscholar.org/graph/v1/paper/{paper_id}"
 MODEL = "claude-opus-5-5"
+
+# Words too common to tell us anything about whether a claim matches.
+STOP_WORDS = {
+    "a", "an", "the", "and", "or", "but", "of", "in", "on", "at", "to", "for", "with",
+    "by", "from", "as", "is", "are", "was", "were", "be", "been", "it", "its", "this",
+    "that", "these", "those", "we", "our", "they", "their", "can", "may", "has", "have",
+    "had", "which", "than", "more", "most", "also", "not", "into", "such",
+}
 
 INSTRUCTIONS = """You check claims in student essays against the paper they cite.
 You only see the paper's title and abstract, so judge the claim against that text alone.
@@ -43,14 +57,59 @@ def get_paper(paper_id):
 
 
 def check_claim(claim, paper):
-    """Ask Claude whether the paper's abstract backs up the claim."""
+    """Check the claim with Claude if there's an API key, otherwise with free keyword matching."""
     if not paper.get("abstract"):
         return ClaimCheck(
             verdict="not_enough_info",
             evidence="",
             explanation="Semantic Scholar has no abstract for this paper, so it can't be checked.",
         )
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        return check_with_claude(claim, paper)
+    return check_with_keywords(claim, paper)
 
+
+def keywords(text):
+    """'Sleep improves memory.' -> {'sleep', 'improv', 'memory'}"""
+    words = re.findall(r"[a-z0-9]+", text.lower())
+    # Cut common endings so "improves" and "improved" count as the same word.
+    return {re.sub(r"(ing|ed|es|s)$", "", word) for word in words if word not in STOP_WORDS}
+
+
+def check_with_keywords(claim, paper):
+    """Free check: find the abstract sentence that shares the most keywords with the claim."""
+    claim_words = keywords(claim)
+    if not claim_words:
+        return ClaimCheck(verdict="not_enough_info", evidence="", explanation="The claim has no keywords to look for.")
+
+    sentences = re.split(r"(?<=[.!?])\s+", paper["abstract"])
+    best = max(sentences, key=lambda sentence: len(claim_words & keywords(sentence)))
+    overlap = len(claim_words & keywords(best)) / len(claim_words)
+
+    # Keyword matching can't tell "X improves Y" from "X does not improve Y",
+    # so it never says "not_supported"; only Claude can judge that.
+    if overlap >= 0.7:
+        verdict = "supported"
+    elif overlap >= 0.4:
+        verdict = "partly_supported"
+    else:
+        return ClaimCheck(
+            verdict="not_enough_info",
+            evidence="",
+            explanation=f"No sentence in the abstract shares enough keywords with the claim ({overlap:.0%} at best).",
+        )
+    return ClaimCheck(
+        verdict=verdict,
+        evidence=best,
+        explanation=(
+            f"This sentence contains {overlap:.0%} of the claim's keywords. "
+            "Keyword matching only checks shared words, not meaning, so read the sentence yourself."
+        ),
+    )
+
+
+def check_with_claude(claim, paper):
+    """Ask Claude whether the paper's abstract backs up the claim."""
     client = anthropic.Anthropic()  # reads your key from ANTHROPIC_API_KEY
     response = client.beta.messages.parse(
         model=MODEL,
