@@ -1,39 +1,80 @@
-"""Search Semantic Scholar for academic papers and print the top results."""
+"""Search OpenAlex for academic papers and print the top results."""
 
-import os
 import time
 
 import requests
-from dotenv import load_dotenv
 
 from citations import format_apa, format_harvard
 
-# Load secret keys from the .env file (git ignores it, so keys never reach GitHub).
-load_dotenv()
-
-SEARCH_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
+WORKS_URL = "https://api.openalex.org/works"
 MAX_ATTEMPTS = 3
-# Optional: a free key from Semantic Scholar gives you your own rate limit.
-API_KEY = os.environ.get("SEMANTIC_SCHOLAR_API_KEY")
+# Only ask OpenAlex for the details we use, so responses stay small and fast.
+FIELDS = (
+    "id,display_name,publication_year,authorships,primary_location,"
+    "cited_by_count,doi,biblio,abstract_inverted_index"
+)
 
 
-def search_papers(query, limit=5):
-    """Return a list of papers (as dicts) matching the search query."""
-    params = {
-        "query": query,
-        "limit": limit,
-        "fields": "title,year,authors,venue,citationCount,url,journal,externalIds",
-    }
-    headers = {"x-api-key": API_KEY} if API_KEY else {}
+def get_json(url, params):
+    """Download data from OpenAlex, waiting and retrying if it's busy."""
     for attempt in range(1, MAX_ATTEMPTS + 1):
-        response = requests.get(SEARCH_URL, params=params, headers=headers, timeout=10)
-        # 429 means "too many requests": the free API is busy, so wait and retry.
+        response = requests.get(url, params=params, timeout=10)
+        # 429 means "too many requests": the API is busy, so wait and retry.
         if response.status_code != 429 or attempt == MAX_ATTEMPTS:
             break
         print("API is busy, retrying in " + str(attempt * 2) + " seconds...")
         time.sleep(attempt * 2)
     response.raise_for_status()
-    return response.json().get("data", [])
+    return response.json()
+
+
+def rebuild_abstract(inverted_index):
+    """OpenAlex stores abstracts as {"word": [positions]}; put the words back in order."""
+    if not inverted_index:
+        return None
+    positions = []
+    for word, places in inverted_index.items():
+        for place in places:
+            positions.append((place, word))
+    positions.sort()
+    return " ".join(word for place, word in positions)
+
+
+def to_paper(work):
+    """Turn an OpenAlex record into the simple paper dictionary the rest of the app uses."""
+    location = work.get("primary_location") or {}
+    source = location.get("source") or {}
+    biblio = work.get("biblio") or {}
+    doi = (work.get("doi") or "").replace("https://doi.org/", "")
+
+    pages = biblio.get("first_page") or ""
+    if pages and biblio.get("last_page"):
+        pages = pages + "-" + biblio["last_page"]
+
+    return {
+        # "https://openalex.org/W123" -> "W123", short enough to put in a link.
+        "paperId": work["id"].split("/")[-1],
+        "title": work.get("display_name") or "Untitled",
+        "year": work.get("publication_year"),
+        "authors": [{"name": a["author"]["display_name"]} for a in work.get("authorships", [])],
+        "venue": source.get("display_name"),
+        "citationCount": work.get("cited_by_count"),
+        "url": work.get("doi") or location.get("landing_page_url") or work["id"],
+        "journal": {"name": source.get("display_name"), "volume": biblio.get("volume"), "pages": pages},
+        "externalIds": {"DOI": doi} if doi else {},
+        "abstract": rebuild_abstract(work.get("abstract_inverted_index")),
+    }
+
+
+def search_papers(query, limit=5):
+    """Return a list of papers (as dicts) matching the search query."""
+    data = get_json(WORKS_URL, {"search": query, "per_page": limit, "select": FIELDS})
+    return [to_paper(work) for work in data.get("results", [])]
+
+
+def get_paper(paper_id):
+    """Download one paper by its OpenAlex ID, like "W2626778328"."""
+    return to_paper(get_json(WORKS_URL + "/" + paper_id, {"select": FIELDS}))
 
 
 def main():

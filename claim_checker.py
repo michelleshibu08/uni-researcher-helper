@@ -9,14 +9,14 @@ import re
 from typing import Literal
 
 import anthropic
-import requests
 from dotenv import load_dotenv
 from pydantic import BaseModel
+
+from search_papers import get_paper
 
 # Load secret keys from the .env file (git ignores it, so keys never reach GitHub).
 load_dotenv()
 
-PAPER_URL = "https://api.semanticscholar.org/graph/v1/paper/{paper_id}"
 MODEL = "claude-opus-5-5"
 
 # Words too common to tell us anything about whether a claim matches.
@@ -45,24 +45,13 @@ class ClaimCheck(BaseModel):
     explanation: str
 
 
-def get_paper(paper_id):
-    """Download one paper's title and abstract from Semantic Scholar."""
-    response = requests.get(
-        PAPER_URL.format(paper_id=paper_id),
-        params={"fields": "title,abstract"},
-        timeout=10,
-    )
-    response.raise_for_status()
-    return response.json()
-
-
 def check_claim(claim, paper):
     """Check the claim with Claude if there's an API key, otherwise with free keyword matching."""
     if not paper.get("abstract"):
         return ClaimCheck(
             verdict="not_enough_info",
             evidence="",
-            explanation="Semantic Scholar has no abstract for this paper, so it can't be checked.",
+            explanation="OpenAlex has no abstract for this paper, so it can't be checked.",
         )
     if os.environ.get("ANTHROPIC_API_KEY"):
         return check_with_claude(claim, paper)
@@ -138,7 +127,7 @@ def check_with_claude(claim, paper):
 
 
 def main():
-    paper_id = input("Paper ID (from the Semantic Scholar link): ").strip()
+    paper_id = input("OpenAlex paper ID (like W2626778328): ").strip()
     claim = input("What claim does your essay make about this paper? ").strip()
 
     paper = get_paper(paper_id)

@@ -2,19 +2,19 @@ from flask import Flask, render_template, request
 from requests import HTTPError, RequestException
 
 from citations import format_apa, format_harvard
-from claim_checker import check_claim, get_paper
-from search_papers import search_papers
+from claim_checker import check_claim
+from search_papers import get_paper, search_papers
 
 app = Flask(__name__)
 
 
 def error_message(error):
-    """Turn an error from Semantic Scholar into a message a student can act on."""
+    """Turn an error from OpenAlex into a message a student can act on."""
     if isinstance(error, HTTPError) and error.response.status_code == 429:
-        return "Semantic Scholar is busy right now. Wait a few seconds and try again."
+        return "OpenAlex is busy right now. Wait a few seconds and try again."
     if isinstance(error, HTTPError) and error.response.status_code == 404:
         return "Couldn't find that paper. Check the paper ID."
-    return "Couldn't reach Semantic Scholar. Check your internet connection and try again."
+    return "Couldn't reach OpenAlex. Check your internet connection and try again."
 
 
 @app.route("/")

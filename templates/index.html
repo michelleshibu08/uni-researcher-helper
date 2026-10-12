@@ -31,7 +31,11 @@
       <button type="button" data-copy="{{ paper.harvard }}">Copy</button>
     </div>
 
-    <a class="check-link" href="{{ url_for('check', paper_id=paper.paperId) }}">Check a claim against this paper →</a>
+    {% if paper.abstract %}
+      <a class="check-link" href="{{ url_for('check', paper_id=paper.paperId) }}">Check a claim against this paper →</a>
+    {% else %}
+      <p class="details">No abstract available, so claims can't be checked against this paper.</p>
+    {% endif %}
   </article>
 {% endfor %}
 {% endblock %}
