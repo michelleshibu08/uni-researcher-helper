@@ -1,3 +1,5 @@
+from datetime import date
+
 from flask import Flask, render_template, request
 from requests import HTTPError, RequestException
 
@@ -21,11 +23,14 @@ def error_message(error):
 def home():
     """Show the search box, and the results if the user searched for something."""
     query = request.args.get("q", "").strip()
+    # How many years back to search; "" means any time. Defaults to the last 10 years.
+    years = request.args.get("years", "10")
+    since_year = date.today().year - int(years) if years.isdigit() else None
     papers = []
     error = None
     if query:
         try:
-            papers = search_papers(query)
+            papers = search_papers(query, since_year=since_year)
         except RequestException as e:
             error = error_message(e)
         if not papers and not error:
@@ -34,7 +39,7 @@ def home():
         for paper in papers:
             paper["apa"] = format_apa(paper)
             paper["harvard"] = format_harvard(paper)
-    return render_template("index.html", query=query, papers=papers, error=error)
+    return render_template("index.html", query=query, years=years, papers=papers, error=error)
 
 
 @app.route("/check", methods=["GET", "POST"])

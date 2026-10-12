@@ -3,6 +3,11 @@
 {% block content %}
 <form class="search" action="{{ url_for('home') }}" method="get">
   <input type="text" name="q" value="{{ query }}" placeholder="What topic are you researching?" required autofocus>
+  <select name="years" aria-label="Published">
+    <option value="5" {% if years == "5" %}selected{% endif %}>Last 5 years</option>
+    <option value="10" {% if years == "10" %}selected{% endif %}>Last 10 years</option>
+    <option value="" {% if years == "" %}selected{% endif %}>Any time</option>
+  </select>
   <button type="submit">Search</button>
 </form>
 

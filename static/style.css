@@ -48,7 +48,7 @@ a { color: var(--accent); }
 .search, .claim { display: flex; gap: 8px; margin-bottom: 24px; }
 .claim { flex-direction: column; }
 
-input, textarea {
+input, textarea, select {
   flex: 1;
   padding: 10px 12px;
   font: inherit;
@@ -133,3 +133,4 @@ blockquote {
 }
 
 button:disabled { opacity: 0.6; cursor: wait; }
+.search select { flex: none; }

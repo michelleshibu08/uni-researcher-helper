@@ -66,9 +66,15 @@ def to_paper(work):
     }
 
 
-def search_papers(query, limit=5):
-    """Return a list of papers (as dicts) matching the search query."""
-    data = get_json(WORKS_URL, {"search": query, "per_page": limit, "select": FIELDS})
+def search_papers(query, limit=10, since_year=None):
+    """Return a list of papers (as dicts) matching the search query.
+
+    since_year keeps only papers published in or after that year, e.g. 2016.
+    """
+    params = {"search": query, "per_page": limit, "select": FIELDS}
+    if since_year:
+        params["filter"] = "from_publication_date:" + str(since_year) + "-01-01"
+    data = get_json(WORKS_URL, params)
     return [to_paper(work) for work in data.get("results", [])]
 
 
