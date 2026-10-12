@@ -85,6 +85,7 @@ def check_with_keywords(claim, paper):
     sentences = re.split(r"(?<=[.!?])\s+", paper["abstract"])
     best = max(sentences, key=lambda sentence: len(claim_words & keywords(sentence)))
     overlap = len(claim_words & keywords(best)) / len(claim_words)
+    percent = str(round(overlap * 100)) + "%"
 
     # Keyword matching can't tell "X improves Y" from "X does not improve Y",
     # so it never says "not_supported"; only Claude can judge that.
@@ -96,13 +97,16 @@ def check_with_keywords(claim, paper):
         return ClaimCheck(
             verdict="not_enough_info",
             evidence="",
-            explanation=f"No sentence in the abstract shares enough keywords with the claim ({overlap:.0%} at best).",
+            explanation=(
+                "No sentence in the abstract shares enough keywords with the claim ("
+                + percent + " at best)."
+            ),
         )
     return ClaimCheck(
         verdict=verdict,
         evidence=best,
         explanation=(
-            f"This sentence contains {overlap:.0%} of the claim's keywords. "
+            "This sentence contains " + percent + " of the claim's keywords. "
             "Keyword matching only checks shared words, not meaning, so read the sentence yourself."
         ),
     )
@@ -121,7 +125,7 @@ def check_with_claude(claim, paper):
         system=INSTRUCTIONS,
         messages=[{
             "role": "user",
-            "content": f"Title: {paper['title']}\n\nAbstract: {paper['abstract']}\n\nClaim: {claim}",
+            "content": "Title: " + paper["title"] + "\n\nAbstract: " + paper["abstract"] + "\n\nClaim: " + claim,
         }],
         output_format=ClaimCheck,
     )
@@ -140,11 +144,11 @@ def main():
     paper = get_paper(paper_id)
     result = check_claim(claim, paper)
 
-    print(f"\nPaper: {paper['title']}")
-    print(f"Verdict: {result.verdict.replace('_', ' ')}")
+    print("\nPaper: " + paper["title"])
+    print("Verdict: " + result.verdict.replace("_", " "))
     if result.evidence:
-        print(f'Evidence: "{result.evidence}"')
-    print(f"Why: {result.explanation}")
+        print('Evidence: "' + result.evidence + '"')
+    print("Why: " + result.explanation)
 
 
 if __name__ == "__main__":

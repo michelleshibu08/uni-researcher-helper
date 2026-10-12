@@ -12,12 +12,12 @@ def initials(name):
 def short_name(name):
     """'Ada Mary Lovelace' -> 'Lovelace, A. M.' (the form both styles use)."""
     surname, inits = initials(name)
-    return f"{surname}, {inits}" if inits else surname
+    return surname + ", " + inits if inits else surname
 
 
 def doi_link(paper):
     doi = (paper.get("externalIds") or {}).get("DOI")
-    return f"https://doi.org/{doi}" if doi else paper.get("url")
+    return "https://doi.org/" + doi if doi else paper.get("url")
 
 
 def journal_details(paper):
@@ -41,19 +41,19 @@ def format_apa(paper):
         author_text = paper["title"]
 
     year = paper.get("year") or "n.d."
-    reference = f"{author_text} ({year}). {paper['title'].rstrip('.')}."
+    reference = author_text + " (" + str(year) + "). " + paper["title"].rstrip(".") + "."
 
     journal, volume, pages = journal_details(paper)
     if journal:
-        reference += f" {journal}"
+        reference += " " + journal
         if volume:
-            reference += f", {volume}"
+            reference += ", " + volume
         if pages:
-            reference += f", {pages}"
+            reference += ", " + pages
         reference += "."
     link = doi_link(paper)
     if link:
-        reference += f" {link}"
+        reference += " " + link
     return reference
 
 
@@ -71,17 +71,17 @@ def format_harvard(paper):
         author_text = paper["title"]
 
     year = paper.get("year") or "no date"
-    reference = f"{author_text} ({year}) '{paper['title'].rstrip('.')}'"
+    reference = author_text + " (" + str(year) + ") '" + paper["title"].rstrip(".") + "'"
 
     journal, volume, pages = journal_details(paper)
     if journal:
-        reference += f", {journal}"
+        reference += ", " + journal
         if volume:
-            reference += f", {volume}"
+            reference += ", " + volume
         if pages:
-            reference += f", pp. {pages}"
+            reference += ", pp. " + pages
     reference += "."
     link = doi_link(paper)
     if link:
-        reference += f" Available at: {link}"
+        reference += " Available at: " + link
     return reference

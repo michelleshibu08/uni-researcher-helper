@@ -30,7 +30,7 @@ def search_papers(query, limit=5):
         # 429 means "too many requests": the free API is busy, so wait and retry.
         if response.status_code != 429 or attempt == MAX_ATTEMPTS:
             break
-        print(f"API is busy, retrying in {attempt * 2} seconds...")
+        print("API is busy, retrying in " + str(attempt * 2) + " seconds...")
         time.sleep(attempt * 2)
     response.raise_for_status()
     return response.json().get("data", [])
@@ -46,13 +46,13 @@ def main():
 
     for number, paper in enumerate(papers, start=1):
         authors = ", ".join(author["name"] for author in paper.get("authors", []))
-        print(f"\n{number}. {paper['title']} ({paper.get('year')})")
-        print(f"   Authors: {authors}")
-        print(f"   Venue: {paper.get('venue') or 'unknown'}")
-        print(f"   Cited by: {paper.get('citationCount')}")
-        print(f"   Link: {paper.get('url')}")
-        print(f"   APA:     {format_apa(paper)}")
-        print(f"   Harvard: {format_harvard(paper)}")
+        print("\n" + str(number) + ". " + paper["title"] + " (" + str(paper.get("year")) + ")")
+        print("   Authors: " + authors)
+        print("   Venue: " + (paper.get("venue") or "unknown"))
+        print("   Cited by: " + str(paper.get("citationCount")))
+        print("   Link: " + str(paper.get("url")))
+        print("   APA:     " + format_apa(paper))
+        print("   Harvard: " + format_harvard(paper))
 
 
 if __name__ == "__main__":
