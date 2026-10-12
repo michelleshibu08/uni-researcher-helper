@@ -15,6 +15,15 @@
     {% block content %}{% endblock %}
   </main>
   <script>
+    // Searching can take a few seconds when the API is busy, so show that it's working.
+    document.querySelectorAll("form").forEach(function (form) {
+      form.addEventListener("submit", function () {
+        var button = form.querySelector("button[type=submit]");
+        button.disabled = true;
+        button.textContent = "Working...";
+      });
+    });
+
     // Copy a reference to the clipboard when its "Copy" button is clicked.
     document.querySelectorAll("[data-copy]").forEach(function (button) {
       button.addEventListener("click", function () {

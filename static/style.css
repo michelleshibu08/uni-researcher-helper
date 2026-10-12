@@ -131,3 +131,5 @@ blockquote {
   .reference { grid-template-columns: 1fr; }
   .search { flex-direction: column; }
 }
+
+button:disabled { opacity: 0.6; cursor: wait; }
