@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Check a claim · Research Helper{% endblock %}
+
+{% block content %}
+<a href="javascript:history.back()">← Back to results</a>
+
+{% if error %}
+  <p class="message">{{ error }}</p>
+{% endif %}
+
+{% if paper %}
+  <h1>{{ paper.title }}</h1>
+  {% if paper.abstract %}
+    <details>
+      <summary>Read the abstract</summary>
+      <p>{{ paper.abstract }}</p>
+    </details>
+  {% endif %}
+
+  <form class="claim" action="{{ url_for('check') }}" method="post">
+    <input type="hidden" name="paper_id" value="{{ paper_id }}">
+    <label for="claim">What does your essay say this paper shows?</label>
+    <textarea id="claim" name="claim" rows="3" required>{{ claim }}</textarea>
+    <button type="submit">Check claim</button>
+  </form>
+
+  {% if result %}
+    <section class="result {{ result.verdict }}">
+      <h2>{{ result.verdict.replace("_", " ").capitalize() }}</h2>
+      {% if result.evidence %}
+        <blockquote>{{ result.evidence }}</blockquote>
+      {% endif %}
+      <p>{{ result.explanation }}</p>
+    </section>
+  {% endif %}
+{% elif not error %}
+  <p class="message">Search for a paper first, then choose "Check a claim against this paper".</p>
+{% endif %}
+{% endblock %}

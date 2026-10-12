@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form class="search" action="{{ url_for('home') }}" method="get">
+  <input type="text" name="q" value="{{ query }}" placeholder="What topic are you researching?" required autofocus>
+  <button type="submit">Search</button>
+</form>
+
+{% if error %}
+  <p class="message">{{ error }}</p>
+{% endif %}
+
+{% for paper in papers %}
+  <article class="paper">
+    <h2><a href="{{ paper.url }}" target="_blank">{{ paper.title }}</a></h2>
+    <p class="details">
+      {{ paper.authors | map(attribute="name") | join(", ") }}
+      {% if paper.year %} · {{ paper.year }}{% endif %}
+      {% if paper.venue %} · {{ paper.venue }}{% endif %}
+      · Cited by {{ paper.citationCount }}
+    </p>
+
+    <div class="reference">
+      <span class="label">APA 7</span>
+      <p>{{ paper.apa }}</p>
+      <button type="button" data-copy="{{ paper.apa }}">Copy</button>
+    </div>
+    <div class="reference">
+      <span class="label">Harvard</span>
+      <p>{{ paper.harvard }}</p>
+      <button type="button" data-copy="{{ paper.harvard }}">Copy</button>
+    </div>
+
+    <a class="check-link" href="{{ url_for('check', paper_id=paper.paperId) }}">Check a claim against this paper →</a>
+  </article>
+{% endfor %}
+{% endblock %}
