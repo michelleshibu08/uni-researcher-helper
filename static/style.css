@@ -146,3 +146,8 @@ button:disabled { opacity: 0.6; cursor: wait; }
   border-radius: 999px;
   vertical-align: middle;
 }
+
+.count { color: var(--muted); font-size: 0.9rem; }
+
+.pages { display: flex; justify-content: space-between; margin-top: 8px; }
+.pages .older { margin-left: auto; }

@@ -114,36 +114,34 @@ def fill_missing_abstracts(papers):
             paper["abstract"] = result["abstract"]
 
 
-def find_papers(query, limit, since_year=None):
-    """Ask OpenAlex for the most relevant papers, optionally only from since_year onwards."""
-    params = {"search": query, "per_page": limit, "select": FIELDS}
-    if since_year:
-        params["filter"] = "from_publication_date:" + str(since_year) + "-01-01"
-    data = get_json(WORKS_URL, params)
-    return [to_paper(work) for work in data.get("results", [])]
+def search_papers(query, page=1, per_page=25, since_year=None):
+    """Return (papers, total) for papers whose title matches the query, newest first.
 
-
-def search_papers(query, limit=10, since_year=None):
-    """Return a list of papers (as dicts) matching the search query, newest first.
-
+    page picks which group of results to show: page 1 is the newest 25,
+    page 2 the next 25, and so on back in time. total is how many match overall.
     since_year keeps only papers published in or after that year, e.g. 2016.
-    OpenAlex ranks older, heavily cited papers highest, so half the results
-    are the most relevant overall and half are the most relevant from the
-    last 2 years. That way recent research always shows up too.
     """
-    recent_year = date.today().year - 2
-    if since_year and since_year >= recent_year:
-        papers = find_papers(query, limit, since_year)
-    else:
-        papers = find_papers(query, limit // 2, since_year)
-        seen = [paper["paperId"] for paper in papers]
-        for paper in find_papers(query, limit, recent_year):
-            if paper["paperId"] not in seen and len(papers) < limit:
-                papers.append(paper)
+    filters = [
+        "title.search:" + query.replace(",", " "),
+        # Only real research, not things like peer-review reports or errata.
+        "type:article|review|book|book-chapter",
+        # Some records are dated in the future; leave those out.
+        "to_publication_date:" + date.today().isoformat(),
+    ]
+    if since_year:
+        filters.append("from_publication_date:" + str(since_year) + "-01-01")
 
-    papers.sort(key=lambda paper: paper["year"] or 0, reverse=True)
+    params = {
+        "filter": ",".join(filters),
+        "sort": "publication_date:desc",
+        "per_page": per_page,
+        "page": page,
+        "select": FIELDS,
+    }
+    data = get_json(WORKS_URL, params)
+    papers = [to_paper(work) for work in data.get("results", [])]
     fill_missing_abstracts(papers)
-    return papers
+    return papers, data["meta"]["count"]
 
 
 def get_paper(paper_id):
@@ -155,7 +153,8 @@ def get_paper(paper_id):
 
 def main():
     query = input("What topic are you researching? ")
-    papers = search_papers(query)
+    papers, total = search_papers(query)
+    print(str(total) + " papers found. Showing the newest " + str(len(papers)) + ".")
 
     if not papers:
         print("No papers found. Try different keywords.")

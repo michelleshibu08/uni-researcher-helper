@@ -19,18 +19,28 @@ def error_message(error):
     return "Couldn't reach OpenAlex. Check your internet connection and try again."
 
 
+PER_PAGE = 25
+# OpenAlex only lets you page through the first 10,000 results of a search.
+MAX_PAGE = 10000 // PER_PAGE
+
+
 @app.route("/")
 def home():
     """Show the search box, and the results if the user searched for something."""
     query = request.args.get("q", "").strip()
-    # How many years back to search; "" means any time. Defaults to the last 10 years.
-    years = request.args.get("years", "10")
+    # How many years back to search; "" (the default) means any time.
+    years = request.args.get("years", "")
     since_year = date.today().year - int(years) if years.isdigit() else None
+    # Which page of results to show, kept between 1 and MAX_PAGE.
+    page = request.args.get("page", "1")
+    page = min(max(int(page), 1), MAX_PAGE) if page.isdigit() else 1
+
     papers = []
+    total = 0
     error = None
     if query:
         try:
-            papers = search_papers(query, since_year=since_year)
+            papers, total = search_papers(query, page=page, per_page=PER_PAGE, since_year=since_year)
         except RequestException as e:
             error = error_message(e)
         if not papers and not error:
@@ -39,10 +49,24 @@ def home():
         for paper in papers:
             paper["apa"] = format_apa(paper)
             paper["harvard"] = format_harvard(paper)
+
+    first = (page - 1) * PER_PAGE + 1
+    last = first + len(papers) - 1
+    has_older = last < total and page < MAX_PAGE
     # Papers from the last 2 years get a "New" label on the page.
     recent_year = date.today().year - 2
     return render_template(
-        "index.html", query=query, years=years, papers=papers, error=error, recent_year=recent_year
+        "index.html",
+        query=query,
+        years=years,
+        papers=papers,
+        error=error,
+        page=page,
+        total=total,
+        first=first,
+        last=last,
+        has_older=has_older,
+        recent_year=recent_year,
     )
 
 

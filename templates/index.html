@@ -4,15 +4,21 @@
 <form class="search" action="{{ url_for('home') }}" method="get">
   <input type="text" name="q" value="{{ query }}" placeholder="What topic are you researching?" required autofocus>
   <select name="years" aria-label="Published">
-    <option value="5" {% if years == "5" %}selected{% endif %}>Last 5 years</option>
-    <option value="10" {% if years == "10" %}selected{% endif %}>Last 10 years</option>
     <option value="" {% if years == "" %}selected{% endif %}>Any time</option>
+    <option value="10" {% if years == "10" %}selected{% endif %}>Last 10 years</option>
+    <option value="5" {% if years == "5" %}selected{% endif %}>Last 5 years</option>
   </select>
   <button type="submit">Search</button>
 </form>
 
 {% if error %}
   <p class="message">{{ error }}</p>
+{% endif %}
+
+{% if papers %}
+  <p class="count">
+    Showing {{ first }}–{{ last }} of {{ "{:,}".format(total) }} papers, newest first
+  </p>
 {% endif %}
 
 {% for paper in papers %}
@@ -46,4 +52,18 @@
     {% endif %}
   </article>
 {% endfor %}
+
+{% if papers %}
+  <nav class="pages">
+    {% if page > 1 %}
+      <a href="{{ url_for('home', q=query, years=years, page=page - 1) }}">← Newer papers</a>
+    {% endif %}
+    {% if has_older %}
+      <a class="older" href="{{ url_for('home', q=query, years=years, page=page + 1) }}">Older papers →</a>
+    {% endif %}
+  </nav>
+  {% if not has_older and last < total %}
+    <p class="count">OpenAlex only shows the first 10,000 results. Use more specific keywords to reach older papers.</p>
+  {% endif %}
+{% endif %}
 {% endblock %}
