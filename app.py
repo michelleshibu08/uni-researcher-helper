@@ -1,7 +1,7 @@
 from datetime import date
 
 import anthropic
-from flask import Flask, render_template, request
+from flask import Flask, Response, render_template, request
 from requests import HTTPError, RequestException
 
 from citations import STYLES
@@ -9,6 +9,7 @@ from claim_checker import check_paragraph
 from search_papers import get_paper, search_papers
 from summary import can_summarise, summarise
 from verify_references import check_reference_list, find_doi
+from word_export import reference_list_docx
 
 app = Flask(__name__)
 
@@ -162,6 +163,19 @@ def verify():
         if result["verdict"] == "check_details":
             result["fixed"] = format_reference(result["paper"])
     return render_template("verify.html", text=text, style=style, results=results, error=error)
+
+
+@app.route("/references/download", methods=["POST"])
+def download_references():
+    """Send the reference list (already sorted by the page) back as a Word document."""
+    data = request.get_json(silent=True) or {}
+    style = data.get("style", "apa")
+    references = [str(reference) for reference in data.get("references", [])]
+    return Response(
+        reference_list_docx(style, references),
+        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": "attachment; filename=reference-list.docx"},
+    )
 
 
 @app.route("/references")

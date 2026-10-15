@@ -15,6 +15,7 @@
     </select>
   </label>
   <button type="button" id="copy-all">Copy all</button>
+  <button type="button" id="download" class="secondary">Download as Word</button>
   <button type="button" id="clear-all" class="secondary">Clear list</button>
 </div>
 
@@ -76,6 +77,28 @@
     this.textContent = "Copied";
     var button = this;
     setTimeout(function () { button.textContent = "Copy all"; }, 1500);
+  });
+
+  // Ask the server to build a Word file from the list, then save it.
+  document.getElementById("download").addEventListener("click", function () {
+    var style = styleBox.value;
+    var saved = sortForStyle(loadSaved().filter(function (paper) { return paper[style]; }), style);
+    fetch("{{ url_for('download_references') }}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        style: style,
+        references: saved.map(function (p, index) { return numberFor(style, index) + p[style]; })
+      })
+    })
+      .then(function (response) { return response.blob(); })
+      .then(function (file) {
+        var link = document.createElement("a");
+        link.href = URL.createObjectURL(file);
+        link.download = "reference-list.docx";
+        link.click();
+        URL.revokeObjectURL(link.href);
+      });
   });
 
   document.getElementById("clear-all").addEventListener("click", function () {
