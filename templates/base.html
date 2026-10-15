@@ -57,6 +57,19 @@
       });
     });
 
+    // Picking another style shows that style's reference, ready to copy.
+    document.querySelectorAll(".other-style").forEach(function (row) {
+      var picker = row.querySelector(".style-picker");
+      picker.addEventListener("change", function () {
+        var option = picker.selectedOptions[0];
+        row.querySelector(".picked-reference").textContent = option.dataset.reference;
+        row.querySelector(".picked-copy").dataset.copy = option.dataset.reference;
+        var intext = row.querySelector(".picked-intext");
+        intext.hidden = !option.dataset.intext;
+        intext.textContent = "In your essay: " + option.dataset.intext;
+      });
+    });
+
     // "Save" adds a paper to the reference list, and pressing it again removes it.
     document.querySelectorAll("[data-save]").forEach(function (button) {
       var paper = JSON.parse(button.dataset.save);

@@ -34,30 +34,34 @@
       · Cited by {{ paper.citationCount }}
     </p>
 
-    <div class="reference">
-      <span class="label">APA 7</span>
-      <div>
-        <p>{{ paper.apa }}</p>
-        <p class="details">In your essay: {{ paper.intext_apa }}</p>
+    {% for key in ["apa", "harvard"] %}
+      <div class="reference">
+        <span class="label">{{ STYLES[key][0] }}</span>
+        <div>
+          <p>{{ paper[key] }}</p>
+          <p class="details">In your essay: {{ paper["intext_" + key] }}</p>
+        </div>
+        <button type="button" data-copy="{{ paper[key] }}">Copy</button>
       </div>
-      <button type="button" data-copy="{{ paper.apa }}">Copy</button>
-    </div>
-    <div class="reference">
-      <span class="label">Harvard</span>
+    {% endfor %}
+
+    {# Other styles: pick one from the list and its reference appears. #}
+    <div class="reference other-style">
+      <select class="style-picker" aria-label="Other reference style">
+        {% for key, style in STYLES.items() if key not in ["apa", "harvard"] %}
+          <option value="{{ key }}"
+                  data-reference="{{ paper[key] }}"
+                  data-intext="{{ paper['intext_' + key] or '' }}">{{ style[0] }}</option>
+        {% endfor %}
+      </select>
       <div>
-        <p>{{ paper.harvard }}</p>
-        <p class="details">In your essay: {{ paper.intext_harvard }}</p>
+        <p class="picked-reference">{{ paper.mla }}</p>
+        <p class="details picked-intext">In your essay: {{ paper.intext_mla }}</p>
       </div>
-      <button type="button" data-copy="{{ paper.harvard }}">Copy</button>
+      <button type="button" class="picked-copy" data-copy="{{ paper.mla }}">Copy</button>
     </div>
 
-    <button type="button" class="secondary save" data-save="{{ {
-      'id': paper.paperId,
-      'apa': paper.apa,
-      'harvard': paper.harvard,
-      'intext_apa': paper.intext_apa,
-      'intext_harvard': paper.intext_harvard,
-    } | tojson | forceescape }}">Save to my references</button>
+    <button type="button" class="secondary save" data-save="{{ saved_data(paper) | tojson | forceescape }}">Save to my references</button>
 
     {% if paper.abstract %}
       <a class="check-link" href="{{ url_for('check', paper_id=paper.paperId) }}">Check a claim against this paper →</a>

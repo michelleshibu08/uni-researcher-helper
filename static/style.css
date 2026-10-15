@@ -195,3 +195,5 @@ button.busy { opacity: 0.6; pointer-events: none; }
 .result.not_found { border-left-color: var(--not-supported); }
 .result.check_details { border-left-color: var(--partly); }
 .result.found { border-left-color: var(--supported); }
+
+.other-style select { flex: none; padding: 4px 6px; font-size: 0.85rem; }

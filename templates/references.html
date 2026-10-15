@@ -9,8 +9,9 @@
   <label>
     Style
     <select id="style">
-      <option value="apa">APA 7</option>
-      <option value="harvard">Harvard</option>
+      {% for key, style in STYLES.items() %}
+        <option value="{{ key }}">{{ style[0] }}</option>
+      {% endfor %}
     </select>
   </label>
   <button type="button" id="copy-all">Copy all</button>
@@ -27,22 +28,34 @@
   var styleBox = document.getElementById("style");
   var list = document.getElementById("list");
 
+  // Most styles sort the list alphabetically. IEEE numbers papers in the order
+  // you cite them instead, so it keeps the order you saved them in.
+  function sortForStyle(papers, style) {
+    if (style !== "ieee") {
+      papers.sort(function (a, b) { return a[style].localeCompare(b[style]); });
+    }
+    return papers;
+  }
+
+  function numberFor(style, index) {
+    return style === "ieee" ? "[" + (index + 1) + "] " : "";
+  }
+
   function render() {
-    var saved = loadSaved();
     var style = styleBox.value;
+    var saved = loadSaved().filter(function (paper) { return paper[style]; });
     document.getElementById("empty").hidden = saved.length > 0;
     list.innerHTML = "";
 
-    // Both APA and Harvard sort the reference list alphabetically.
-    saved.sort(function (a, b) { return a[style].localeCompare(b[style]); });
+    sortForStyle(saved, style);
 
-    saved.forEach(function (paper) {
+    saved.forEach(function (paper, index) {
       var item = document.createElement("li");
       var text = document.createElement("p");
-      text.textContent = paper[style];
+      text.textContent = numberFor(style, index) + paper[style];
       var intext = document.createElement("p");
       intext.className = "details";
-      intext.textContent = "In your essay: " + paper["intext_" + style];
+      intext.textContent = paper["intext_" + style] ? "In your essay: " + paper["intext_" + style] : "";
       var remove = document.createElement("button");
       remove.type = "button";
       remove.className = "secondary";
@@ -58,8 +71,8 @@
 
   document.getElementById("copy-all").addEventListener("click", function () {
     var style = styleBox.value;
-    var saved = loadSaved().sort(function (a, b) { return a[style].localeCompare(b[style]); });
-    navigator.clipboard.writeText(saved.map(function (p) { return p[style]; }).join("\n\n"));
+    var saved = sortForStyle(loadSaved().filter(function (paper) { return paper[style]; }), style);
+    navigator.clipboard.writeText(saved.map(function (p, index) { return numberFor(style, index) + p[style]; }).join("\n\n"));
     this.textContent = "Copied";
     var button = this;
     setTimeout(function () { button.textContent = "Copy all"; }, 1500);

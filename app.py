@@ -4,7 +4,7 @@ import anthropic
 from flask import Flask, render_template, request
 from requests import HTTPError, RequestException
 
-from citations import format_apa, format_harvard, intext_apa, intext_harvard
+from citations import STYLES
 from claim_checker import check_paragraph
 from search_papers import get_paper, search_papers
 from summary import can_summarise, summarise
@@ -23,11 +23,23 @@ def error_message(error):
 
 
 def add_references(paper):
-    """Add the full and in-text references to a paper so the page can show them."""
-    paper["apa"] = format_apa(paper)
-    paper["harvard"] = format_harvard(paper)
-    paper["intext_apa"] = intext_apa(paper)
-    paper["intext_harvard"] = intext_harvard(paper)
+    """Add the reference and in-text citation in every style, e.g. paper["mla"] and paper["intext_mla"]."""
+    for key, (name, format_reference, format_intext) in STYLES.items():
+        paper[key] = format_reference(paper)
+        paper["intext_" + key] = format_intext(paper) if format_intext else None
+
+
+def saved_data(paper):
+    """What the Save button stores in the browser: the paper's ID plus every style."""
+    data = {"id": paper["paperId"]}
+    for key in STYLES:
+        data[key] = paper[key]
+        data["intext_" + key] = paper["intext_" + key]
+    return data
+
+
+# Let every page use STYLES and saved_data.
+app.jinja_env.globals.update(STYLES=STYLES, saved_data=saved_data)
 
 
 PER_PAGE = 25
