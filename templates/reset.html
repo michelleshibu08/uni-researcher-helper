@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Choose a new password · Researchify{% endblock %}
+
+{% block content %}
+<section class="auth-card">
+  <img src="{{ url_for('static', filename='logo.svg') }}" alt="" width="52" height="52">
+  {% if valid %}
+    <h1>Choose a new password</h1>
+    <form class="claim" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% if error %}<p class="message form-error">{{ error }}</p>{% endif %}
+      <label for="password">New password <span class="details">(at least 8 characters)</span></label>
+      <input type="password" id="password" name="password" autocomplete="new-password" minlength="8" required>
+      <label for="confirm">Type it again</label>
+      <input type="password" id="confirm" name="confirm" autocomplete="new-password" minlength="8" required>
+      <button type="submit">Save new password</button>
+    </form>
+  {% else %}
+    <h1>This link has expired</h1>
+    <p class="details">Reset links work once, for one hour. You can ask for a new one.</p>
+    <p><a href="{{ url_for('forgot') }}">Send me a new link →</a></p>
+  {% endif %}
+</section>
+{% endblock %}

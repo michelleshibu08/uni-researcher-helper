@@ -9,9 +9,10 @@
   <p class="details">Log in to see your essay projects.</p>
   <form class="claim" action="{{ url_for('login') }}" method="post">
     {% include "_auth_form.html" %}
+    {% if message %}<p class="message">{{ message }}</p>{% endif %}
     <label for="email">Email</label>
     <input type="email" id="email" name="email" value="{{ email }}" autocomplete="email" required>
-    <label for="password">Password</label>
+    <label for="password">Password <a class="forgot-link" href="{{ url_for('forgot') }}">Forgot password?</a></label>
     <input type="password" id="password" name="password" autocomplete="current-password" required>
     <button type="submit">Log in</button>
   </form>

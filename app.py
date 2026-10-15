@@ -14,6 +14,7 @@ from search_papers import get_paper, search_papers
 from summary import can_summarise, summarise
 from research_tools import related_papers, start_research
 from verify_references import check_reference_list, find_doi
+from emails import email_is_set_up, send_email
 from word_export import essay_docx, reference_list_docx
 
 app = Flask(__name__)
@@ -348,20 +349,97 @@ def signup():
     return render_template("signup.html", name=name, email=email, error=error)
 
 
+# Limits on log-in attempts: per email address (to protect one account) and per
+# internet address (to stop one person trying lots of accounts).
+MAX_TRIES_PER_EMAIL = 5
+MAX_TRIES_PER_IP = 20
+LOCKOUT_MINUTES = 15
+
+
+def too_many_attempts(email):
+    email_key = "login-email:" + email.lower()
+    ip_key = "login-ip:" + (request.remote_addr or "unknown")
+    return (
+        database.recent_attempts(email_key, LOCKOUT_MINUTES) >= MAX_TRIES_PER_EMAIL
+        or database.recent_attempts(ip_key, LOCKOUT_MINUTES) >= MAX_TRIES_PER_IP
+    )
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     error = None
     email = request.form.get("email", "").strip()
     if request.method == "POST":
         check_csrf()
+        if too_many_attempts(email):
+            error = (
+                "Too many tries. For your security, wait " + str(LOCKOUT_MINUTES)
+                + " minutes before trying again, or reset your password."
+            )
+            return render_template("login.html", email=email, error=error)
         user = database.check_login(email, request.form.get("password", ""))
         if user:
+            database.clear_attempts("login-email:" + email.lower())
             session.clear()
             session["user_id"] = user["id"]
             return redirect(safe_next(url_for("project")))
+        database.record_attempt("login-email:" + email.lower())
+        database.record_attempt("login-ip:" + (request.remote_addr or "unknown"))
         # The same message either way, so nobody can find out which emails have accounts.
         error = "That email and password don't match. Please try again."
-    return render_template("login.html", email=email, error=error)
+    message = "Your password has been changed. Log in with your new one." if request.args.get("reset") else None
+    return render_template("login.html", email=email, error=error, message=message)
+
+
+@app.route("/forgot", methods=["GET", "POST"])
+def forgot():
+    """Email a password reset link."""
+    sent = False
+    error = None
+    email = request.form.get("email", "").strip()
+    if request.method == "POST":
+        check_csrf()
+        # Only a few reset emails per address per hour, so nobody can flood someone's inbox.
+        key = "reset-email:" + email.lower()
+        if database.recent_attempts(key, 60) >= 3:
+            error = "We've already sent a few reset emails. Please check your inbox (and spam), or try again in an hour."
+        else:
+            database.record_attempt(key)
+            user = database.find_user_by_email(email)
+            if user:
+                token = database.create_reset_token(user["id"])
+                link = url_for("reset", token=token, _external=True)
+                send_email(
+                    user["email"],
+                    "Reset your Researchify password",
+                    "Hi " + user["name"].split()[0] + ",\n\n"
+                    + "Someone (hopefully you) asked to reset your Researchify password. "
+                    + "Open this link to choose a new one. It works once, for the next hour:\n\n"
+                    + link + "\n\n"
+                    + "If you didn't ask for this, you can ignore this email. Your password won't change.",
+                )
+            # Say the same thing whether or not the account exists.
+            sent = True
+    return render_template("forgot.html", email=email, sent=sent, error=error, email_set_up=email_is_set_up())
+
+
+@app.route("/reset/<token>", methods=["GET", "POST"])
+def reset(token):
+    """Choose a new password using the link from the email."""
+    if not database.check_reset_token(token):
+        return render_template("reset.html", valid=False, error=None)
+    error = None
+    if request.method == "POST":
+        check_csrf()
+        password = request.form.get("password", "")
+        if len(password) < 8:
+            error = "Your password needs at least 8 characters."
+        elif password != request.form.get("confirm", ""):
+            error = "The two passwords don't match."
+        elif database.reset_password(token, password):
+            session.clear()
+            return redirect(url_for("login", reset=1))
+    return render_template("reset.html", valid=True, error=error)
 
 
 @app.route("/logout", methods=["POST"])

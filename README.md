@@ -55,7 +55,8 @@ Both modes only see the abstract, not the full paper. About 1 in 4 papers in Ope
 | File | What it does |
 | --- | --- |
 | `app.py` | The Flask web app: every page, plus sign-up, log-in and saving projects |
-| `database.py` | Stores user accounts and their projects in SQLite |
+| `database.py` | Stores user accounts, their projects, log-in attempts and password reset links in SQLite |
+| `emails.py` | Sends emails, like password reset links |
 | `search_papers.py` | Talks to OpenAlex, retries when it's busy, converts results into a simple paper format, and fills missing abstracts from Semantic Scholar |
 | `citations.py` | Turns paper details into references (APA 7, Harvard, MLA 9, Chicago, IEEE, OSCOLA) and in-text citations |
 | `claim_checker.py` | Checks a claim (or a paragraph, sentence by sentence) against an abstract, by keywords or with Claude |
@@ -106,6 +107,11 @@ Students can sign up and log in to keep their projects in their account. Account
 SQLite database at `instance/researchify.db`, created automatically the first time the app runs. Passwords
 are never stored, only a salted hash of each one. Git ignores the `instance` folder, so no account data is
 ever uploaded. Without an account, projects are kept in the browser instead.
+
+After 5 wrong passwords for one account (or 20 from one connection) in 15 minutes, logging in is paused,
+so nobody can keep guessing. **Forgot password?** emails a one-use reset link that works for an hour. To send
+real emails, add your email account's details to `.env` (see `emails.py`); until then the link is printed in
+the terminal running the app.
 
 When you put the site online, also add a long random `SECRET_KEY` to `.env`. It signs the login cookies so
 they can't be faked. (Locally, one is made for you in `instance/secret_key`.)

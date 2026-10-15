@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Forgot password · Researchify{% endblock %}
+
+{% block content %}
+<section class="auth-card">
+  <img src="{{ url_for('static', filename='logo.svg') }}" alt="" width="52" height="52">
+  <h1>Forgot your password?</h1>
+  {% if sent %}
+    <p class="message">
+      If there's an account for <strong>{{ email }}</strong>, we've sent it a link to reset the password.
+      It works for one hour. Check your spam folder if it doesn't arrive.
+    </p>
+    {% if not email_set_up %}
+      <p class="details">(Email isn't set up on this computer yet, so the link was printed in the terminal running the app.)</p>
+    {% endif %}
+    <p class="details"><a href="{{ url_for('login') }}">Back to log in</a></p>
+  {% else %}
+    <p class="details">Enter your email and we'll send you a link to choose a new password.</p>
+    <form class="claim" action="{{ url_for('forgot') }}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% if error %}<p class="message form-error">{{ error }}</p>{% endif %}
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="{{ email }}" autocomplete="email" required>
+      <button type="submit">Send reset link</button>
+    </form>
+    <p class="details"><a href="{{ url_for('login') }}">Back to log in</a></p>
+  {% endif %}
+</section>
+{% endblock %}
