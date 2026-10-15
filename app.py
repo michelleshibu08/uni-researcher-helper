@@ -1,9 +1,12 @@
+import os
+import secrets
 from datetime import date
 
 import anthropic
-from flask import Flask, Response, redirect, render_template, request, url_for
+from flask import Flask, Response, abort, g, jsonify, redirect, render_template, request, session, url_for
 from requests import HTTPError, RequestException
 
+import database
 from citations import STYLES
 from claim_checker import check_paragraph
 from essay_checker import check_essay
@@ -14,6 +17,51 @@ from verify_references import check_reference_list, find_doi
 from word_export import essay_docx, reference_list_docx
 
 app = Flask(__name__)
+
+
+def secret_key():
+    """The key Flask uses to sign login cookies so they can't be faked.
+
+    It comes from SECRET_KEY in .env, or is made once and kept in the instance folder.
+    """
+    if os.environ.get("SECRET_KEY"):
+        return os.environ["SECRET_KEY"]
+    path = os.path.join(os.path.dirname(__file__), "instance", "secret_key")
+    if not os.path.exists(path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as file:
+            file.write(secrets.token_hex(32))
+    with open(path) as file:
+        return file.read().strip()
+
+
+app.config.update(
+    SECRET_KEY=secret_key(),
+    SESSION_COOKIE_HTTPONLY=True,  # page scripts can't read the login cookie
+    SESSION_COOKIE_SAMESITE="Lax",  # other websites can't send it along with their requests
+    MAX_CONTENT_LENGTH=5 * 1024 * 1024,  # refuse anything bigger than 5 MB
+)
+database.create_tables()
+
+
+@app.before_request
+def load_user():
+    """Look up who's logged in (if anyone) before every page."""
+    user_id = session.get("user_id")
+    g.user = database.get_user(user_id) if user_id else None
+
+
+def csrf_token():
+    """A random token that our own forms send back, so other sites can't submit them for you."""
+    if "csrf_token" not in session:
+        session["csrf_token"] = secrets.token_hex(16)
+    return session["csrf_token"]
+
+
+def check_csrf():
+    sent = request.form.get("csrf_token") or request.headers.get("X-CSRF-Token")
+    if not sent or not secrets.compare_digest(sent, session.get("csrf_token", "")):
+        abort(400, "This form has expired. Go back, refresh the page and try again.")
 
 
 def error_message(error):
@@ -49,7 +97,9 @@ def saved_data(paper):
 
 
 # Let every page use these. Papers from the last 2 years get a "New" label.
-app.jinja_env.globals.update(STYLES=STYLES, saved_data=saved_data, recent_year=date.today().year - 2)
+app.jinja_env.globals.update(
+    STYLES=STYLES, saved_data=saved_data, recent_year=date.today().year - 2, csrf_token=csrf_token
+)
 
 
 PER_PAGE = 25
@@ -266,6 +316,75 @@ def download_essay():
         mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={"Content-Disposition": "attachment; filename=essay.docx"},
     )
+
+
+def safe_next(default):
+    """Only follow "next" links within this site, so a login link can't send people elsewhere."""
+    target = request.values.get("next", "")
+    return target if target.startswith("/") and not target.startswith("//") else default
+
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    error = None
+    name = request.form.get("name", "").strip()
+    email = request.form.get("email", "").strip()
+    if request.method == "POST":
+        check_csrf()
+        password = request.form.get("password", "")
+        if not name or "@" not in email:
+            error = "Please enter your name and a valid email address."
+        elif len(password) < 8:
+            error = "Your password needs at least 8 characters."
+        else:
+            user_id = database.create_user(name, email, password)
+            if user_id is None:
+                error = "There's already an account with that email. Try logging in instead."
+            else:
+                # A fresh session on login stops anyone reusing an old cookie.
+                session.clear()
+                session["user_id"] = user_id
+                return redirect(safe_next(url_for("project")))
+    return render_template("signup.html", name=name, email=email, error=error)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    email = request.form.get("email", "").strip()
+    if request.method == "POST":
+        check_csrf()
+        user = database.check_login(email, request.form.get("password", ""))
+        if user:
+            session.clear()
+            session["user_id"] = user["id"]
+            return redirect(safe_next(url_for("project")))
+        # The same message either way, so nobody can find out which emails have accounts.
+        error = "That email and password don't match. Please try again."
+    return render_template("login.html", email=email, error=error)
+
+
+@app.route("/logout", methods=["POST"])
+def logout():
+    check_csrf()
+    session.clear()
+    return redirect(url_for("home"))
+
+
+@app.route("/api/projects", methods=["GET", "PUT"])
+def api_projects():
+    """Load or save the logged-in user's projects."""
+    if not g.user:
+        return jsonify({"error": "Not logged in"}), 401
+    if request.method == "PUT":
+        check_csrf()
+        projects = request.get_json(silent=True)
+        # Only accept a list of projects (MAX_CONTENT_LENGTH already blocks anything huge).
+        if not isinstance(projects, list):
+            return jsonify({"error": "That doesn't look like a list of projects."}), 400
+        database.save_projects(g.user["id"], projects)
+        return jsonify({"saved": True})
+    return jsonify({"projects": database.load_projects(g.user["id"])})
 
 
 if __name__ == "__main__":

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Log in · Researchify{% endblock %}
+
+{% block content %}
+<section class="auth-card">
+  <img src="{{ url_for('static', filename='logo.svg') }}" alt="" width="52" height="52">
+  <h1>Welcome back</h1>
+  <p class="details">Log in to see your essay projects.</p>
+  <form class="claim" action="{{ url_for('login') }}" method="post">
+    {% include "_auth_form.html" %}
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" value="{{ email }}" autocomplete="email" required>
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" autocomplete="current-password" required>
+    <button type="submit">Log in</button>
+  </form>
+  <p class="details">New here? <a href="{{ url_for('signup', next=request.values.get('next', '')) }}">Create an account</a></p>
+</section>
+{% endblock %}

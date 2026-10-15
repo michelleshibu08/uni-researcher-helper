@@ -3,6 +3,12 @@
 {% block title %}My project · Researchify{% endblock %}
 
 {% block content %}
+{% if not g.user %}
+  <div class="account-banner">
+    <span>Your projects are only saved in this browser. Sign up to keep them safe and open them on any device.</span>
+    <a href="{{ url_for('signup', next='/project') }}">Sign up free →</a>
+  </div>
+{% endif %}
 <div class="project-bar">
   <label>
     Project

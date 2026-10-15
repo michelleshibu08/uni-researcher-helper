@@ -25,7 +25,7 @@ Everything a student needs for an essay, in the order they need it:
    - **Claim checker** checks a sentence or paragraph against a paper's abstract.
 7. **Finish:** references in **APA 7, Harvard, MLA 9, Chicago, IEEE and OSCOLA**, and **download your essay with its reference list as a Word document**.
 
-Free, no sign-up, no ads. Projects are saved in your own browser, and nothing you paste is stored on the server.
+Free to use. Sign up to keep your projects in your account and open them on any device.
 
 ![An essay report](docs/essay-report.jpg)
 
@@ -47,13 +47,15 @@ Both modes only see the abstract, not the full paper. About 1 in 4 papers in Ope
 - **Semantic Scholar API** (optional) to fill in missing abstracts
 - **Anthropic Claude API** for the optional meaning-based claim check
 - **python-docx** to build Word documents
+- **SQLite** for user accounts and saved projects
 - HTML templates (Jinja) and plain CSS
 
 ## Project structure
 
 | File | What it does |
 | --- | --- |
-| `app.py` | The Flask web app: the search page and the claim-check page |
+| `app.py` | The Flask web app: every page, plus sign-up, log-in and saving projects |
+| `database.py` | Stores user accounts and their projects in SQLite |
 | `search_papers.py` | Talks to OpenAlex, retries when it's busy, converts results into a simple paper format, and fills missing abstracts from Semantic Scholar |
 | `citations.py` | Turns paper details into references (APA 7, Harvard, MLA 9, Chicago, IEEE, OSCOLA) and in-text citations |
 | `claim_checker.py` | Checks a claim (or a paragraph, sentence by sentence) against an abstract, by keywords or with Claude |
@@ -97,6 +99,16 @@ ANTHROPIC_API_KEY=your-key-here
 Get them from [OpenAlex](https://help.openalex.org/api/authentication/), [Semantic Scholar](https://www.semanticscholar.org/product/api#api-key-form) and [Anthropic](https://console.anthropic.com). All three are optional, and the OpenAlex and Semantic Scholar keys are free.
 
 Git ignores `.env`, so the key never gets uploaded.
+
+### Accounts
+
+Students can sign up and log in to keep their projects in their account. Accounts are stored in a small
+SQLite database at `instance/researchify.db`, created automatically the first time the app runs. Passwords
+are never stored, only a salted hash of each one. Git ignores the `instance` folder, so no account data is
+ever uploaded. Without an account, projects are kept in the browser instead.
+
+When you put the site online, also add a long random `SECRET_KEY` to `.env`. It signs the login cookies so
+they can't be faked. (Locally, one is made for you in `instance/secret_key`.)
 
 ### Command-line versions
 

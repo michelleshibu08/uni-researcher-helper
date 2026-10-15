@@ -10,7 +10,8 @@
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo.svg') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body data-logged-in="{{ 'yes' if g.user else 'no' }}" data-user-id="{{ g.user.id if g.user else '' }}" data-csrf="{{ csrf_token() }}"
+      data-projects-url="{{ url_for('api_projects') }}">
   <header>
     <a class="logo" href="{{ url_for('home') }}">
       <img class="logo-mark" src="{{ url_for('static', filename='logo.svg') }}" alt="" width="34" height="34">
@@ -21,6 +22,16 @@
       <a href="{{ url_for('essay') }}">Check my essay</a>
       <a href="{{ url_for('verify') }}">Check references</a>
       <a class="nav-project" href="{{ url_for('project') }}">My project (<span id="saved-count">0</span>)</a>
+      {% if g.user %}
+        <form class="nav-form" action="{{ url_for('logout') }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <span class="nav-user">Hi, {{ g.user.name.split()[0] }}</span>
+          <button type="submit" class="link-button">Log out</button>
+        </form>
+      {% else %}
+        <a href="{{ url_for('login', next=request.path) }}">Log in</a>
+        <a class="nav-signup" href="{{ url_for('signup', next=request.path) }}">Sign up</a>
+      {% endif %}
     </nav>
   </header>
   <main>
@@ -34,6 +45,7 @@
   <script src="{{ url_for('static', filename='storage.js') }}"></script>
   <script>
     updateProjectCount();
+    loadFromAccount();
 
     // Searching can take a few seconds when the API is busy, so show that it's working.
     document.querySelectorAll("form").forEach(function (form) {

@@ -1,4 +1,6 @@
-// Projects are kept in this browser's storage, so students don't need an account.
+// Projects are kept in this browser's storage so pages load instantly. When a student
+// is logged in, every change is also saved to their account on the server, and their
+// saved projects are loaded from the server when a page opens.
 //
 // A project looks like:
 // { id, name, question, style, papers: [...], plan: [...], draft, wordTarget }
@@ -6,6 +8,12 @@
 
 var STORAGE_KEY = "projects";
 var ACTIVE_KEY = "activeProject";
+// Whose projects the browser copy belongs to: a user ID, or "guest".
+var OWNER_KEY = "projectsOwner";
+
+var page = document.body.dataset;
+var LOGGED_IN = page.loggedIn === "yes";
+var OWNER = LOGGED_IN ? page.userId : "guest";
 
 function readStorage(key, fallback) {
   try {
@@ -38,6 +46,13 @@ function newProject(name) {
 }
 
 function loadProjects() {
+  // Never show one person's projects to someone else using the same browser.
+  // (Projects made as a guest are kept, so they can move into a new account.)
+  var owner = readStorage(OWNER_KEY, "guest");
+  if (owner !== "guest" && owner !== OWNER) {
+    writeStorage(STORAGE_KEY, null);
+    writeStorage(OWNER_KEY, OWNER);
+  }
   var projects = readStorage(STORAGE_KEY, null);
   if (!projects || !projects.length) {
     // Papers saved before projects existed move into a first project.
@@ -55,7 +70,60 @@ function loadProjects() {
 
 function saveProjects(projects) {
   writeStorage(STORAGE_KEY, projects);
+  // A logged-in user's projects only become theirs once the account has loaded,
+  // so a brand-new account can still pick up the guest projects.
+  if (!LOGGED_IN || accountLoaded) {
+    writeStorage(OWNER_KEY, OWNER);
+  }
   updateProjectCount();
+  if (LOGGED_IN) {
+    saveToAccountSoon(projects);
+  }
+}
+
+// Typing saves on every key press, so wait until the student pauses for a second
+// before sending the projects to the server, instead of sending hundreds of requests.
+var saveTimer = null;
+var accountLoaded = false;
+function saveToAccountSoon(projects) {
+  if (!accountLoaded) {
+    // Don't overwrite the account before we've seen what's in it.
+    return;
+  }
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(function () {
+    fetch(page.projectsUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": page.csrf },
+      body: JSON.stringify(projects)
+    });
+  }, 1000);
+}
+
+// When a logged-in page opens, fetch the projects saved in the account.
+function loadFromAccount() {
+  if (!LOGGED_IN) {
+    return;
+  }
+  // Remember what this browser had before, in case the account is brand new.
+  var guestProjects = readStorage(OWNER_KEY, "guest") === "guest" ? readStorage(STORAGE_KEY, null) : null;
+  fetch(page.projectsUrl)
+    .then(function (response) { return response.json(); })
+    .then(function (data) {
+      accountLoaded = true;
+      if (data.projects && data.projects.length) {
+        writeStorage(STORAGE_KEY, data.projects);
+        writeStorage(OWNER_KEY, OWNER);
+      } else if (guestProjects && guestProjects.length) {
+        // A new account keeps the projects the student made before signing up.
+        writeStorage(STORAGE_KEY, guestProjects);
+        writeStorage(OWNER_KEY, OWNER);
+        saveToAccountSoon(guestProjects);
+      }
+      updateProjectCount();
+      // Let the page redraw with the account's projects.
+      document.dispatchEvent(new Event("projects-loaded"));
+    });
 }
 
 function activeProject(projects) {
@@ -83,3 +151,11 @@ function updateProjectCount() {
     counter.textContent = activeProject(loadProjects()).papers.length;
   }
 }
+
+// Logging out clears this browser's copy, so the next person can't see it.
+document.addEventListener("submit", function (event) {
+  if (event.target.classList.contains("nav-form")) {
+    writeStorage(STORAGE_KEY, null);
+    writeStorage(OWNER_KEY, "guest");
+  }
+});

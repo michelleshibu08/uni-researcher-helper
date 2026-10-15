@@ -1,0 +1,6 @@
+{# The parts the sign-up and log-in forms share. #}
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="next" value="{{ request.values.get('next', '') }}">
+{% if error %}
+  <p class="message form-error">{{ error }}</p>
+{% endif %}

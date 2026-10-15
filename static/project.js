@@ -1,5 +1,5 @@
 // The project workspace: sources, plan, writing space and reference list for one essay.
-// Everything is saved in the browser (see storage.js) as soon as it changes.
+// Everything is saved as soon as it changes (see storage.js).
 
 var STATUSES = [
   ["to_read", "To read"],
@@ -470,4 +470,6 @@ function showTabFromAddress() {
 
 renderAll();
 showTabFromAddress();
+// Redraw once the projects saved in the student's account have loaded.
+document.addEventListener("projects-loaded", renderAll);
 window.addEventListener("hashchange", showTabFromAddress);

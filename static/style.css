@@ -580,3 +580,47 @@ button.small { padding: 5px 12px; font-size: 0.85rem; }
   .paper-actions select { flex: 1 1 100%; }
   .tab { padding: 8px 6px; font-size: 0.85rem; }
 }
+
+/* ---------- Accounts ---------- */
+.nav { align-items: center; }
+.nav-form { display: inline-flex; align-items: center; gap: 4px; margin: 0; }
+.nav-user { padding: 6px 4px 6px 12px; color: var(--text); font-weight: 600; font-size: 0.95rem; }
+.link-button {
+  padding: 6px 12px;
+  color: var(--muted);
+  background: transparent;
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+.link-button:hover { background: var(--accent-soft); color: var(--accent); filter: none; }
+.nav a.nav-signup { color: var(--accent-text); background: var(--accent); }
+.nav a.nav-signup:hover { color: var(--accent-text); background: var(--accent); filter: brightness(1.08); }
+
+.auth-card {
+  max-width: 420px;
+  margin: 16px auto;
+  padding: 32px;
+  text-align: center;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+.auth-card h1 { margin: 12px 0 4px; font-size: 1.8rem; }
+.auth-card form { text-align: left; margin: 20px 0 12px; }
+.auth-card form button { width: 100%; margin-top: 8px; }
+.form-error { border-color: var(--not-supported); color: var(--not-supported); }
+
+.account-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+  font-size: 0.92rem;
+}
+.account-banner a { font-weight: 600; }
