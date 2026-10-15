@@ -16,12 +16,12 @@ from email.message import EmailMessage
 
 
 def email_is_set_up():
-    return bool(os.environ.get("MAIL_SERVER"))
+    return all(os.environ.get(name) for name in ["MAIL_SERVER", "MAIL_USERNAME", "MAIL_PASSWORD"])
 
 
 def send_email(to, subject, body):
     if not email_is_set_up():
-        print("\n----- Email (not sent: no MAIL_SERVER in .env) -----")
+        print("\n----- Email (not sent: email isn't set up in .env) -----")
         print("To: " + to)
         print("Subject: " + subject)
         print(body)

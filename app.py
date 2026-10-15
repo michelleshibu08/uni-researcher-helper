@@ -1,5 +1,6 @@
 import os
 import secrets
+import smtplib
 from datetime import date
 
 import anthropic
@@ -409,18 +410,27 @@ def forgot():
             if user:
                 token = database.create_reset_token(user["id"])
                 link = url_for("reset", token=token, _external=True)
-                send_email(
-                    user["email"],
-                    "Reset your Researchify password",
-                    "Hi " + user["name"].split()[0] + ",\n\n"
-                    + "Someone (hopefully you) asked to reset your Researchify password. "
-                    + "Open this link to choose a new one. It works once, for the next hour:\n\n"
-                    + link + "\n\n"
-                    + "If you didn't ask for this, you can ignore this email. Your password won't change.",
-                )
+                try:
+                    send_reset_email(user, link)
+                except (OSError, smtplib.SMTPException) as e:
+                    # Don't crash if the email account is wrong or offline. The page still shows
+                    # the usual message, so it doesn't reveal that this email has an account.
+                    app.logger.error("Couldn't send the reset email: " + str(e))
             # Say the same thing whether or not the account exists.
             sent = True
     return render_template("forgot.html", email=email, sent=sent, error=error, email_set_up=email_is_set_up())
+
+
+def send_reset_email(user, link):
+    send_email(
+        user["email"],
+        "Reset your Researchify password",
+        "Hi " + user["name"].split()[0] + ",\n\n"
+        + "Someone (hopefully you) asked to reset your Researchify password. "
+        + "Open this link to choose a new one. It works once, for the next hour:\n\n"
+        + link + "\n\n"
+        + "If you didn't ask for this, you can ignore this email. Your password won't change.",
+    )
 
 
 @app.route("/reset/<token>", methods=["GET", "POST"])
