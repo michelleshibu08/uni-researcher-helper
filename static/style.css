@@ -154,7 +154,7 @@ button:disabled { opacity: 0.6; cursor: wait; }
 
 /* Navigation link to the reference list, on the right of the header. */
 header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
-.nav-link { margin-left: auto; font-weight: 600; }
+
 
 /* Lighter buttons for less important actions. */
 button.secondary {
@@ -190,3 +190,8 @@ button.busy { opacity: 0.6; pointer-events: none; }
 }
 .reference-list p { margin: 0 0 4px; }
 .reference-list button { padding: 4px 10px; font-size: 0.85rem; }
+
+.nav { margin-left: auto; display: flex; gap: 16px; font-weight: 600; }
+.result.not_found { border-left-color: var(--not-supported); }
+.result.check_details { border-left-color: var(--partly); }
+.result.found { border-left-color: var(--supported); }

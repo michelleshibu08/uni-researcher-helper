@@ -8,6 +8,7 @@ from citations import format_apa, format_harvard, intext_apa, intext_harvard
 from claim_checker import check_paragraph
 from search_papers import get_paper, search_papers
 from summary import can_summarise, summarise
+from verify_references import check_reference_list
 
 app = Flask(__name__)
 
@@ -114,6 +115,20 @@ def check():
         can_summarise=can_summarise(),
         error=error,
     )
+
+
+@app.route("/verify", methods=["GET", "POST"])
+def verify():
+    """Check that every reference in a pasted reference list is a real paper."""
+    text = request.form.get("references", "").strip()
+    results = []
+    error = None
+    if text:
+        try:
+            results = check_reference_list(text)
+        except RequestException as e:
+            error = error_message(e)
+    return render_template("verify.html", text=text, results=results, error=error)
 
 
 @app.route("/references")

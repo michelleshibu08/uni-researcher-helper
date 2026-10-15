@@ -1,10 +1,12 @@
 """Search OpenAlex for academic papers and print the top results.
 
 If SEMANTIC_SCHOLAR_API_KEY is in your .env file, papers that OpenAlex has no
-abstract for get one from Semantic Scholar instead.
+abstract for get one from Semantic Scholar instead. OPENALEX_API_KEY (free) gives
+you your own OpenAlex allowance instead of a shared one.
 """
 
 import os
+import re
 import time
 from datetime import date
 
@@ -31,6 +33,11 @@ def get_json(url, params, body=None, headers=None):
 
     With a body, the data is sent as a POST request instead of a GET.
     """
+    # Without a key, OpenAlex shares a small daily allowance between everyone on
+    # the same network. A free key gives you your own allowance.
+    openalex_key = os.environ.get("OPENALEX_API_KEY")
+    if url.startswith(WORKS_URL) and openalex_key:
+        headers = {"Authorization": "Bearer " + openalex_key}
     for attempt in range(1, MAX_ATTEMPTS + 1):
         if body is None:
             response = requests.get(url, params=params, headers=headers, timeout=10)
@@ -45,6 +52,11 @@ def get_json(url, params, body=None, headers=None):
         time.sleep(attempt * 2)
     response.raise_for_status()
     return response.json()
+
+
+def clean_search_text(text):
+    """OpenAlex rejects searches with symbols like ? or :, so keep only letters, numbers and spaces."""
+    return " ".join(re.sub(r"[^\w\s]", " ", text).split())
 
 
 def rebuild_abstract(inverted_index):
@@ -122,7 +134,7 @@ def search_papers(query, page=1, per_page=25, since_year=None):
     since_year keeps only papers published in or after that year, e.g. 2016.
     """
     filters = [
-        "title.search:" + query.replace(",", " "),
+        "title.search:" + clean_search_text(query),
         # Only real research, not things like peer-review reports or errata.
         "type:article|review|book|book-chapter",
         # Some records are dated in the future; leave those out.

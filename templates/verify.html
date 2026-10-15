@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Check my references · Research Helper{% endblock %}
+
+{% block content %}
+<h1>Are my references real?</h1>
+<p class="details">
+  AI chatbots sometimes invent references that look real. Paste your reference list, one reference
+  per line, and each one is looked up to check the paper exists and the details match.
+</p>
+
+<form class="claim" action="{{ url_for('verify') }}" method="post">
+  <label for="references">Your reference list (APA or Harvard)</label>
+  <textarea id="references" name="references" rows="8" required>{{ text }}</textarea>
+  <button type="submit">Check references</button>
+</form>
+
+{% if error %}
+  <p class="message">{{ error }}</p>
+{% endif %}
+
+{% if results %}
+  <p class="count">
+    {{ results | selectattr("verdict", "equalto", "found") | list | length }} of {{ results | length }} references look right.
+  </p>
+{% endif %}
+
+{% for result in results %}
+  <section class="result {{ result.verdict }}">
+    <p class="sentence">{{ result.reference }}</p>
+    <h2>
+      {% if result.verdict == "found" %}Found
+      {% elif result.verdict == "check_details" %}Found, but check the details
+      {% elif result.verdict == "not_found" %}Not found
+      {% elif result.verdict == "error" %}Couldn't check
+      {% else %}Couldn't read this one{% endif %}
+    </h2>
+    <p>{{ result.message }}</p>
+    {% if result.paper and result.verdict == "check_details" %}
+      <p class="details">
+        The real paper: <a href="{{ result.paper.url }}" target="_blank">{{ result.paper.title }}</a>
+        {% if result.paper.authors %} · {{ result.paper.authors[0].name }}{% endif %}
+        {% if result.paper.year %} · {{ result.paper.year }}{% endif %}
+      </p>
+    {% endif %}
+  </section>
+{% endfor %}
+{% endblock %}
