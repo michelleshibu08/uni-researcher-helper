@@ -11,29 +11,49 @@
 
 {% if paper %}
   <h1>{{ paper.title }}</h1>
+  <p class="details">
+    Cite in your essay as {{ paper.intext_apa }} in APA or {{ paper.intext_harvard }} in Harvard.
+  </p>
+
   {% if paper.abstract %}
     <details>
       <summary>Read the abstract</summary>
       <p>{{ paper.abstract }}</p>
     </details>
+
+    {% if summary %}
+      <section class="summary">
+        <h2>In plain English</h2>
+        <p>{{ summary }}</p>
+      </section>
+    {% elif can_summarise %}
+      <form action="{{ url_for('check') }}" method="post">
+        <input type="hidden" name="paper_id" value="{{ paper_id }}">
+        <input type="hidden" name="claim" value="{{ claim }}">
+        <button type="submit" name="action" value="summarise">Summarise in plain English</button>
+      </form>
+    {% endif %}
   {% endif %}
 
   <form class="claim" action="{{ url_for('check') }}" method="post">
     <input type="hidden" name="paper_id" value="{{ paper_id }}">
-    <label for="claim">What does your essay say this paper shows?</label>
-    <textarea id="claim" name="claim" rows="3" required>{{ claim }}</textarea>
-    <button type="submit">Check claim</button>
+    <label for="claim">What does your essay say this paper shows? Paste a sentence or a whole paragraph.</label>
+    <textarea id="claim" name="claim" rows="5" required>{{ claim }}</textarea>
+    <button type="submit" name="action" value="check">Check</button>
   </form>
 
-  {% if result %}
+  {% for sentence, result in results %}
     <section class="result {{ result.verdict }}">
+      {% if results | length > 1 %}
+        <p class="sentence">"{{ sentence }}"</p>
+      {% endif %}
       <h2>{{ result.verdict.replace("_", " ").capitalize() }}</h2>
       {% if result.evidence %}
         <blockquote>{{ result.evidence }}</blockquote>
       {% endif %}
       <p>{{ result.explanation }}</p>
     </section>
-  {% endif %}
+  {% endfor %}
 {% elif not error %}
   <p class="message">Search for a paper first, then choose "Check a claim against this paper".</p>
 {% endif %}

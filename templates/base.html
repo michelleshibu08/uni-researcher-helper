@@ -10,16 +10,37 @@
   <header>
     <a class="logo" href="{{ url_for('home') }}">Research Helper</a>
     <span class="tagline">Find, cite and check academic papers</span>
+    <a class="nav-link" href="{{ url_for('references') }}">My references (<span id="saved-count">0</span>)</a>
   </header>
   <main>
     {% block content %}{% endblock %}
   </main>
   <script>
+    // Saved papers are kept in this browser's storage, so there's no account to set up.
+    function loadSaved() {
+      try {
+        return JSON.parse(localStorage.getItem("savedPapers")) || [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveAll(papers) {
+      try {
+        localStorage.setItem("savedPapers", JSON.stringify(papers));
+      } catch (error) {
+        // Storage can be blocked (for example in private browsing); the list just won't be kept.
+      }
+      document.getElementById("saved-count").textContent = papers.length;
+    }
+
+    document.getElementById("saved-count").textContent = loadSaved().length;
+
     // Searching can take a few seconds when the API is busy, so show that it's working.
     document.querySelectorAll("form").forEach(function (form) {
-      form.addEventListener("submit", function () {
-        var button = form.querySelector("button[type=submit]");
-        button.disabled = true;
+      form.addEventListener("submit", function (event) {
+        var button = event.submitter || form.querySelector("button[type=submit]");
+        button.classList.add("busy");
         button.textContent = "Working...";
       });
     });
@@ -32,6 +53,24 @@
         setTimeout(function () { button.textContent = "Copy"; }, 1500);
       });
     });
+
+    // "Save" adds a paper to the reference list, and pressing it again removes it.
+    document.querySelectorAll("[data-save]").forEach(function (button) {
+      var paper = JSON.parse(button.dataset.save);
+      function isSaved() {
+        return loadSaved().some(function (p) { return p.id === paper.id; });
+      }
+      function showState() {
+        button.textContent = isSaved() ? "Saved ✓" : "Save to my references";
+      }
+      button.addEventListener("click", function () {
+        var others = loadSaved().filter(function (p) { return p.id !== paper.id; });
+        saveAll(isSaved() ? others : others.concat([paper]));
+        showState();
+      });
+      showState();
+    });
   </script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -85,3 +85,38 @@ def format_harvard(paper):
     if link:
         reference += " Available at: " + link
     return reference
+
+
+def surnames(paper):
+    return [initials(author["name"])[0] for author in paper.get("authors", [])]
+
+
+def intext_apa(paper):
+    """APA 7 in-text citation: (Smith, 2020), (Smith & Jones, 2020) or (Smith et al., 2020)."""
+    names = surnames(paper)
+    year = str(paper.get("year") or "n.d.")
+    if len(names) >= 3:
+        author_text = names[0] + " et al."
+    elif len(names) == 2:
+        author_text = names[0] + " & " + names[1]
+    elif names:
+        author_text = names[0]
+    else:
+        # No authors: APA uses the title instead.
+        author_text = paper["title"]
+    return "(" + author_text + ", " + year + ")"
+
+
+def intext_harvard(paper):
+    """Harvard in-text citation: up to three surnames, then "et al." from four authors."""
+    names = surnames(paper)
+    year = str(paper.get("year") or "no date")
+    if len(names) >= 4:
+        author_text = names[0] + " et al."
+    elif len(names) > 1:
+        author_text = ", ".join(names[:-1]) + " and " + names[-1]
+    elif names:
+        author_text = names[0]
+    else:
+        author_text = paper["title"]
+    return "(" + author_text + ", " + year + ")"

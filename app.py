@@ -1,11 +1,13 @@
 from datetime import date
 
+import anthropic
 from flask import Flask, render_template, request
 from requests import HTTPError, RequestException
 
-from citations import format_apa, format_harvard
-from claim_checker import check_claim
+from citations import format_apa, format_harvard, intext_apa, intext_harvard
+from claim_checker import check_paragraph
 from search_papers import get_paper, search_papers
+from summary import can_summarise, summarise
 
 app = Flask(__name__)
 
@@ -17,6 +19,14 @@ def error_message(error):
     if isinstance(error, HTTPError) and error.response.status_code == 404:
         return "Couldn't find that paper. Check the paper ID."
     return "Couldn't reach OpenAlex. Check your internet connection and try again."
+
+
+def add_references(paper):
+    """Add the full and in-text references to a paper so the page can show them."""
+    paper["apa"] = format_apa(paper)
+    paper["harvard"] = format_harvard(paper)
+    paper["intext_apa"] = intext_apa(paper)
+    paper["intext_harvard"] = intext_harvard(paper)
 
 
 PER_PAGE = 25
@@ -45,10 +55,8 @@ def home():
             error = error_message(e)
         if not papers and not error:
             error = "No papers found. Try different keywords."
-        # Add the references to each paper so the page can show them.
         for paper in papers:
-            paper["apa"] = format_apa(paper)
-            paper["harvard"] = format_harvard(paper)
+            add_references(paper)
 
     first = (page - 1) * PER_PAGE + 1
     last = first + len(papers) - 1
@@ -72,24 +80,46 @@ def home():
 
 @app.route("/check", methods=["GET", "POST"])
 def check():
-    """Let the user check a claim from their essay against one paper."""
+    """Let the user check their essay against one paper, or get a plain-English summary."""
     # request.values reads the paper ID from the link (GET) or the form (POST).
     paper_id = request.values.get("paper_id", "").strip()
     claim = request.form.get("claim", "").strip()
+    # Which button was pressed: "check" or "summarise".
+    action = request.form.get("action", "")
     paper = None
-    result = None
+    results = []
+    summary_text = None
     error = None
     try:
         if paper_id:
             paper = get_paper(paper_id)
-        # Only run the check once the form has been sent with a claim.
-        if paper and claim:
-            result = check_claim(claim, paper)
+        if paper and action == "check" and claim:
+            # A paragraph is checked one sentence at a time.
+            results = check_paragraph(claim, paper)
+        if paper and action == "summarise" and can_summarise() and paper["abstract"]:
+            summary_text = summarise(paper)
     except RequestException as e:
         error = error_message(e)
+    except anthropic.APIError:
+        error = "Claude couldn't be reached right now. Try again in a moment."
+    if paper:
+        add_references(paper)
     return render_template(
-        "check.html", paper_id=paper_id, paper=paper, claim=claim, result=result, error=error
+        "check.html",
+        paper_id=paper_id,
+        paper=paper,
+        claim=claim,
+        results=results,
+        summary=summary_text,
+        can_summarise=can_summarise(),
+        error=error,
     )
+
+
+@app.route("/references")
+def references():
+    """The reference list. The saved papers live in the browser, so the page fills itself in."""
+    return render_template("references.html")
 
 
 if __name__ == "__main__":

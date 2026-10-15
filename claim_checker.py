@@ -65,13 +65,24 @@ def keywords(text):
     return {re.sub(r"(ing|ed|es|s)$", "", word) for word in words if word not in STOP_WORDS}
 
 
+def split_sentences(text):
+    """'Sleep helps memory. It also helps mood.' -> ['Sleep helps memory.', 'It also helps mood.']"""
+    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+    return [sentence for sentence in sentences if sentence]
+
+
+def check_paragraph(paragraph, paper):
+    """Check every sentence of a paragraph against the paper, one claim at a time."""
+    return [(sentence, check_claim(sentence, paper)) for sentence in split_sentences(paragraph)]
+
+
 def check_with_keywords(claim, paper):
     """Free check: find the abstract sentence that shares the most keywords with the claim."""
     claim_words = keywords(claim)
     if not claim_words:
         return ClaimCheck(verdict="not_enough_info", evidence="", explanation="The claim has no keywords to look for.")
 
-    sentences = re.split(r"(?<=[.!?])\s+", paper["abstract"])
+    sentences = split_sentences(paper["abstract"])
     best = max(sentences, key=lambda sentence: len(claim_words & keywords(sentence)))
     overlap = len(claim_words & keywords(best)) / len(claim_words)
     percent = str(round(overlap * 100)) + "%"

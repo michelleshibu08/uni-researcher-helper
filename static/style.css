@@ -151,3 +151,42 @@ button:disabled { opacity: 0.6; cursor: wait; }
 
 .pages { display: flex; justify-content: space-between; margin-top: 8px; }
 .pages .older { margin-left: auto; }
+
+/* Navigation link to the reference list, on the right of the header. */
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.nav-link { margin-left: auto; font-weight: 600; }
+
+/* Lighter buttons for less important actions. */
+button.secondary {
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--accent);
+}
+
+button.busy { opacity: 0.6; pointer-events: none; }
+
+.save { margin: 8px 12px 0 0; padding: 6px 12px; font-size: 0.9rem; }
+.reference .details { margin: 4px 0 0; }
+
+.summary {
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.summary h2 { margin-top: 0; font-size: 1.1rem; }
+
+.sentence { margin: 0 0 4px; color: var(--muted); font-style: italic; }
+.result { margin-bottom: 12px; }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+.toolbar select { margin-left: 6px; }
+
+.reference-list { padding-left: 20px; }
+.reference-list li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.reference-list p { margin: 0 0 4px; }
+.reference-list button { padding: 4px 10px; font-size: 0.85rem; }

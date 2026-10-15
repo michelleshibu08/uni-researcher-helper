@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}My references · Research Helper{% endblock %}
+
+{% block content %}
+<h1>My reference list</h1>
+
+<div class="toolbar">
+  <label>
+    Style
+    <select id="style">
+      <option value="apa">APA 7</option>
+      <option value="harvard">Harvard</option>
+    </select>
+  </label>
+  <button type="button" id="copy-all">Copy all</button>
+  <button type="button" id="clear-all" class="secondary">Clear list</button>
+</div>
+
+<p class="message" id="empty">No saved papers yet. Search for a topic and press "Save" on the papers you use.</p>
+<ol class="reference-list" id="list"></ol>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Saved papers are stored in this browser only, under the name "savedPapers".
+  var styleBox = document.getElementById("style");
+  var list = document.getElementById("list");
+
+  function render() {
+    var saved = loadSaved();
+    var style = styleBox.value;
+    document.getElementById("empty").hidden = saved.length > 0;
+    list.innerHTML = "";
+
+    // Both APA and Harvard sort the reference list alphabetically.
+    saved.sort(function (a, b) { return a[style].localeCompare(b[style]); });
+
+    saved.forEach(function (paper) {
+      var item = document.createElement("li");
+      var text = document.createElement("p");
+      text.textContent = paper[style];
+      var intext = document.createElement("p");
+      intext.className = "details";
+      intext.textContent = "In your essay: " + paper["intext_" + style];
+      var remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "secondary";
+      remove.textContent = "Remove";
+      remove.addEventListener("click", function () {
+        saveAll(loadSaved().filter(function (p) { return p.id !== paper.id; }));
+        render();
+      });
+      item.append(text, intext, remove);
+      list.append(item);
+    });
+  }
+
+  document.getElementById("copy-all").addEventListener("click", function () {
+    var style = styleBox.value;
+    var saved = loadSaved().sort(function (a, b) { return a[style].localeCompare(b[style]); });
+    navigator.clipboard.writeText(saved.map(function (p) { return p[style]; }).join("\n\n"));
+    this.textContent = "Copied";
+    var button = this;
+    setTimeout(function () { button.textContent = "Copy all"; }, 1500);
+  });
+
+  document.getElementById("clear-all").addEventListener("click", function () {
+    if (confirm("Remove every paper from your reference list?")) {
+      saveAll([]);
+      render();
+    }
+  });
+
+  styleBox.addEventListener("change", render);
+  render();
+</script>
+{% endblock %}

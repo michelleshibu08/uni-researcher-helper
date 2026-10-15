@@ -11,8 +11,10 @@ Writing an essay with academic sources has three fiddly steps: finding relevant 
 ## Features
 
 - **Search papers:** type a topic and see every paper from [OpenAlex](https://openalex.org) (a free database of over 300 million academic works) with those words in its title, newest first, 25 at a time. Use **Older papers →** to keep going back in time, or filter to the last 5 or 10 years. Papers from the last 2 years are marked **New**.
-- **Ready-made references:** every result comes with an **APA 7** and a **Harvard** reference, each with a one-click Copy button.
-- **Claim checker:** type what your essay says a paper shows, and the app checks it against the paper's abstract. It gives a verdict (*supported*, *partly supported*, *not supported* or *not enough info*) and quotes the sentence it based that on.
+- **Ready-made references:** every result comes with an **APA 7** and a **Harvard** reference, each with a one-click Copy button, plus the short in-text citation to use inside your essay, like *(Smith et al., 2024)*.
+- **Reference list builder:** press **Save** on the papers you use, and **My references** collects them into one alphabetical list in APA or Harvard, ready to copy in one go. The list is stored in your browser, so there's no account to make.
+- **Claim checker:** paste a sentence or a whole paragraph of your essay, and the app checks each sentence against the paper's abstract. Each one gets a verdict (*supported*, *partly supported*, *not supported* or *not enough info*) and the sentence from the abstract it's based on.
+- **Plain-English summary (needs a Claude key):** a button that explains the paper's abstract in simple words, without jargon.
 
 ![Checking a claim against a paper](docs/claim-check.jpg)
 
@@ -39,8 +41,9 @@ Both modes only see the abstract, not the full paper. About 1 in 4 papers in Ope
 | --- | --- |
 | `app.py` | The Flask web app: the search page and the claim-check page |
 | `search_papers.py` | Talks to OpenAlex, retries when it's busy, converts results into a simple paper format, and fills missing abstracts from Semantic Scholar |
-| `citations.py` | Turns paper details into APA 7 and Harvard references |
-| `claim_checker.py` | Checks a claim against an abstract, by keywords or with Claude |
+| `citations.py` | Turns paper details into APA 7 and Harvard references and in-text citations |
+| `claim_checker.py` | Checks a claim (or a paragraph, sentence by sentence) against an abstract, by keywords or with Claude |
+| `summary.py` | Explains an abstract in plain English with Claude |
 | `templates/` | The HTML for each page |
 | `static/style.css` | The site's design |
 
@@ -66,7 +69,7 @@ The app works without any keys. To turn on the extras, create a file called `.en
 ```
 # Fills in abstracts that OpenAlex is missing
 SEMANTIC_SCHOLAR_API_KEY=your-key-here
-# Uses Claude for meaning-based claim checks
+# Uses Claude for meaning-based claim checks and plain-English summaries
 ANTHROPIC_API_KEY=your-key-here
 ```
 
@@ -88,6 +91,7 @@ python claim_checker.py
 - Put the app online so it can be used without installing anything
 - Automated tests for the citation formatting and the claim checker
 - More citation styles, such as MLA and Chicago
+- Export the reference list as a Word document
 
 ## License
 

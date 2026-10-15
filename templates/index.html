@@ -36,14 +36,28 @@
 
     <div class="reference">
       <span class="label">APA 7</span>
-      <p>{{ paper.apa }}</p>
+      <div>
+        <p>{{ paper.apa }}</p>
+        <p class="details">In your essay: {{ paper.intext_apa }}</p>
+      </div>
       <button type="button" data-copy="{{ paper.apa }}">Copy</button>
     </div>
     <div class="reference">
       <span class="label">Harvard</span>
-      <p>{{ paper.harvard }}</p>
+      <div>
+        <p>{{ paper.harvard }}</p>
+        <p class="details">In your essay: {{ paper.intext_harvard }}</p>
+      </div>
       <button type="button" data-copy="{{ paper.harvard }}">Copy</button>
     </div>
+
+    <button type="button" class="secondary save" data-save="{{ {
+      'id': paper.paperId,
+      'apa': paper.apa,
+      'harvard': paper.harvard,
+      'intext_apa': paper.intext_apa,
+      'intext_harvard': paper.intext_harvard,
+    } | tojson | forceescape }}">Save to my references</button>
 
     {% if paper.abstract %}
       <a class="check-link" href="{{ url_for('check', paper_id=paper.paperId) }}">Check a claim against this paper →</a>
