@@ -6,6 +6,7 @@ from requests import HTTPError, RequestException
 
 from citations import STYLES
 from claim_checker import check_paragraph
+from essay_checker import check_essay
 from search_papers import get_paper, search_papers
 from summary import can_summarise, summarise
 from verify_references import check_reference_list, find_doi
@@ -163,6 +164,25 @@ def verify():
         if result["verdict"] == "check_details":
             result["fixed"] = format_reference(result["paper"])
     return render_template("verify.html", text=text, style=style, results=results, error=error)
+
+
+@app.route("/essay", methods=["GET", "POST"])
+def essay():
+    """Check a whole essay's citations, references and claims in one report."""
+    essay_text = request.form.get("essay", "").strip()
+    reference_text = request.form.get("references", "").strip()
+    report = None
+    error = None
+    if essay_text and reference_text:
+        try:
+            report = check_essay(essay_text, reference_text)
+        except RequestException as e:
+            error = error_message(e)
+        except anthropic.APIError:
+            error = "Claude couldn't be reached right now. Try again in a moment."
+    return render_template(
+        "essay.html", essay=essay_text, references=reference_text, report=report, error=error
+    )
 
 
 @app.route("/references/download", methods=["POST"])

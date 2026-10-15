@@ -210,3 +210,10 @@ button.busy { opacity: 0.6; pointer-events: none; }
 .fixed button { padding: 4px 10px; font-size: 0.85rem; }
 .claim label select { margin-left: 6px; }
 @media (max-width: 600px) { .fixed { grid-template-columns: 1fr; } }
+
+.checklist { list-style: none; padding: 0; margin: 0 0 8px; }
+.checklist li { padding: 4px 0 4px 26px; position: relative; }
+.checklist li::before { position: absolute; left: 0; font-weight: 700; }
+.checklist .good::before { content: "✓"; color: var(--supported); }
+.checklist .warn::before { content: "!"; color: var(--partly); }
+.checklist .bad::before { content: "✗"; color: var(--not-supported); }

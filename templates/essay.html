@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Check my essay · Research Helper{% endblock %}
+
+{% block content %}
+<h1>Check my essay</h1>
+<p class="details">
+  Paste your essay and your reference list. You'll get one report showing citations with no reference,
+  references you never cite, references that look made up, and claims your sources don't back up.
+  Works with author-date styles like APA and Harvard. Nothing you paste is saved.
+</p>
+
+<form class="claim" action="{{ url_for('essay') }}" method="post">
+  <label for="essay">Your essay</label>
+  <textarea id="essay" name="essay" rows="10" required>{{ essay }}</textarea>
+  <label for="references">Your reference list, one reference per line</label>
+  <textarea id="references" name="references" rows="6" required>{{ references }}</textarea>
+  <button type="submit">Check my essay</button>
+</form>
+
+{% if error %}
+  <p class="message">{{ error }}</p>
+{% endif %}
+
+{% if report %}
+  {% set fake = report.references | selectattr("verdict", "equalto", "not_found") | list %}
+  {% set wrong = report.references | selectattr("verdict", "equalto", "check_details") | list %}
+  {% set unsupported = report.claims | selectattr("result") | rejectattr("result.verdict", "in", ["supported"]) | list %}
+
+  <section class="summary">
+    <h2>Your report</h2>
+    <ul class="checklist">
+      <li class="{{ 'bad' if report.missing else 'good' }}">{{ report.missing | length }} citation(s) with no matching reference</li>
+      <li class="{{ 'warn' if report.uncited else 'good' }}">{{ report.uncited | length }} reference(s) never cited in the essay</li>
+      <li class="{{ 'bad' if fake else 'good' }}">{{ fake | length }} reference(s) that couldn't be found (may be made up)</li>
+      <li class="{{ 'warn' if wrong else 'good' }}">{{ wrong | length }} reference(s) with details to check</li>
+      <li class="{{ 'warn' if unsupported else 'good' }}">{{ unsupported | length }} of {{ report.claims | selectattr("result") | list | length }} checked claim(s) not clearly backed up</li>
+    </ul>
+    <p class="details">Found {{ report.citation_count }} citation(s) in your essay.</p>
+  </section>
+
+  {% if report.missing %}
+    <h2>Citations with no reference</h2>
+    {% for item in report.missing %}
+      <section class="result not_supported">
+        <h2>{{ item.citation }}</h2>
+        <p class="sentence">"{{ item.sentence }}"</p>
+        <p>Add this source to your reference list, or check the name and year match it exactly.</p>
+      </section>
+    {% endfor %}
+  {% endif %}
+
+  {% if report.uncited %}
+    <h2>References you never cite</h2>
+    {% for reference in report.uncited %}
+      <section class="result partly_supported">
+        <p>{{ reference }}</p>
+        <p class="details">Most styles only list sources you cite. Cite it in your essay or remove it.</p>
+      </section>
+    {% endfor %}
+  {% endif %}
+
+  {% if report.claims %}
+    <h2>Claims</h2>
+    {% for claim in report.claims %}
+      <section class="result {{ claim.result.verdict if claim.result else '' }}">
+        <p class="sentence">"{{ claim.sentence }}"</p>
+        {% if claim.result %}
+          <h2>{{ claim.result.verdict.replace("_", " ").capitalize() }}</h2>
+          {% if claim.result.evidence %}<blockquote>{{ claim.result.evidence }}</blockquote>{% endif %}
+          <p>{{ claim.result.explanation }}</p>
+        {% else %}
+          <h2>Couldn't check</h2>
+          <p>There's no abstract available for "{{ claim.paper_title }}", so read the paper to make sure it says this.</p>
+        {% endif %}
+      </section>
+    {% endfor %}
+  {% endif %}
+
+  <h2>References</h2>
+  {% for result in report.references %}
+    <section class="result {{ result.verdict }}">
+      <p class="sentence">{{ result.reference }}</p>
+      <p>{{ result.message }}</p>
+    </section>
+  {% endfor %}
+{% endif %}
+{% endblock %}
