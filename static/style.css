@@ -197,3 +197,16 @@ button.busy { opacity: 0.6; pointer-events: none; }
 .result.found { border-left-color: var(--supported); }
 
 .other-style select { flex: none; padding: 4px 6px; font-size: 0.85rem; }
+
+.fixed {
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  gap: 12px;
+  align-items: start;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.fixed p { margin: 0; }
+.fixed button { padding: 4px 10px; font-size: 0.85rem; }
+.claim label select { margin-left: 6px; }
+@media (max-width: 600px) { .fixed { grid-template-columns: 1fr; } }

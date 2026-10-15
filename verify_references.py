@@ -99,16 +99,20 @@ def search_semantic_scholar(title):
     try:
         data = get_json(
             SEMANTIC_SCHOLAR_MATCH_URL,
-            {"query": title, "fields": "title,year,authors,url"},
+            {"query": title, "fields": "title,year,authors,url,externalIds,venue,journal,abstract"},
             headers={"x-api-key": api_key},
         )
     except requests.RequestException:
         # 404 means "no match"; any other problem just means no second opinion.
         return []
-    return [
-        {"title": match["title"], "year": match.get("year"), "authors": match.get("authors") or [], "url": match.get("url")}
-        for match in data.get("data", [])
-    ]
+    papers = []
+    for match in data.get("data", []):
+        # Fill in anything missing so these look like OpenAlex papers to the rest of the code.
+        match["authors"] = match.get("authors") or []
+        match["externalIds"] = match.get("externalIds") or {}
+        match["journal"] = match.get("journal") or {}
+        papers.append(match)
+    return papers
 
 
 def check_reference(reference):

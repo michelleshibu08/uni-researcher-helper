@@ -145,6 +145,10 @@ def check():
 def verify():
     """Check that every reference in a pasted reference list is a real paper."""
     text = request.form.get("references", "").strip()
+    # The style the student writes in, so corrected references come out the same way.
+    style = request.form.get("style", "apa")
+    if style not in STYLES:
+        style = "apa"
     results = []
     error = None
     if text:
@@ -152,7 +156,12 @@ def verify():
             results = check_reference_list(text)
         except RequestException as e:
             error = error_message(e)
-    return render_template("verify.html", text=text, results=results, error=error)
+    # "Fix it for me": the real paper's reference, written in the student's style.
+    format_reference = STYLES[style][1]
+    for result in results:
+        if result["verdict"] == "check_details":
+            result["fixed"] = format_reference(result["paper"])
+    return render_template("verify.html", text=text, style=style, results=results, error=error)
 
 
 @app.route("/references")

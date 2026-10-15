@@ -10,8 +10,16 @@
 </p>
 
 <form class="claim" action="{{ url_for('verify') }}" method="post">
-  <label for="references">Your reference list (APA or Harvard)</label>
+  <label for="references">Your reference list, one reference per line</label>
   <textarea id="references" name="references" rows="8" required>{{ text }}</textarea>
+  <label>
+    My references are written in
+    <select name="style">
+      {% for key, option in STYLES.items() %}
+        <option value="{{ key }}" {% if key == style %}selected{% endif %}>{{ option[0] }}</option>
+      {% endfor %}
+    </select>
+  </label>
   <button type="submit">Check references</button>
 </form>
 
@@ -36,12 +44,12 @@
       {% else %}Couldn't read this one{% endif %}
     </h2>
     <p>{{ result.message }}</p>
-    {% if result.paper and result.verdict == "check_details" %}
-      <p class="details">
-        The real paper: <a href="{{ result.paper.url }}" target="_blank">{{ result.paper.title }}</a>
-        {% if result.paper.authors %} · {{ result.paper.authors[0].name }}{% endif %}
-        {% if result.paper.year %} · {{ result.paper.year }}{% endif %}
-      </p>
+    {% if result.fixed %}
+      <div class="fixed">
+        <span class="label">Corrected</span>
+        <p>{{ result.fixed }}</p>
+        <button type="button" data-copy="{{ result.fixed }}">Copy</button>
+      </div>
     {% endif %}
   </section>
 {% endfor %}
