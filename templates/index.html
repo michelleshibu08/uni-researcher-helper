@@ -17,7 +17,10 @@
 
 {% for paper in papers %}
   <article class="paper">
-    <h2><a href="{{ paper.url }}" target="_blank">{{ paper.title }}</a></h2>
+    <h2>
+      {% if paper.year and paper.year >= recent_year %}<span class="new">New</span>{% endif %}
+      <a href="{{ paper.url }}" target="_blank">{{ paper.title }}</a>
+    </h2>
     <p class="details">
       {{ paper.authors | map(attribute="name") | join(", ") }}
       {% if paper.year %} · {{ paper.year }}{% endif %}

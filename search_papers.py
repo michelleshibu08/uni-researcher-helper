@@ -6,6 +6,7 @@ abstract for get one from Semantic Scholar instead.
 
 import os
 import time
+from datetime import date
 
 import requests
 from dotenv import load_dotenv
@@ -113,16 +114,34 @@ def fill_missing_abstracts(papers):
             paper["abstract"] = result["abstract"]
 
 
-def search_papers(query, limit=10, since_year=None):
-    """Return a list of papers (as dicts) matching the search query.
-
-    since_year keeps only papers published in or after that year, e.g. 2016.
-    """
+def find_papers(query, limit, since_year=None):
+    """Ask OpenAlex for the most relevant papers, optionally only from since_year onwards."""
     params = {"search": query, "per_page": limit, "select": FIELDS}
     if since_year:
         params["filter"] = "from_publication_date:" + str(since_year) + "-01-01"
     data = get_json(WORKS_URL, params)
-    papers = [to_paper(work) for work in data.get("results", [])]
+    return [to_paper(work) for work in data.get("results", [])]
+
+
+def search_papers(query, limit=10, since_year=None):
+    """Return a list of papers (as dicts) matching the search query, newest first.
+
+    since_year keeps only papers published in or after that year, e.g. 2016.
+    OpenAlex ranks older, heavily cited papers highest, so half the results
+    are the most relevant overall and half are the most relevant from the
+    last 2 years. That way recent research always shows up too.
+    """
+    recent_year = date.today().year - 2
+    if since_year and since_year >= recent_year:
+        papers = find_papers(query, limit, since_year)
+    else:
+        papers = find_papers(query, limit // 2, since_year)
+        seen = [paper["paperId"] for paper in papers]
+        for paper in find_papers(query, limit, recent_year):
+            if paper["paperId"] not in seen and len(papers) < limit:
+                papers.append(paper)
+
+    papers.sort(key=lambda paper: paper["year"] or 0, reverse=True)
     fill_missing_abstracts(papers)
     return papers
 

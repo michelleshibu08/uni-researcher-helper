@@ -39,7 +39,11 @@ def home():
         for paper in papers:
             paper["apa"] = format_apa(paper)
             paper["harvard"] = format_harvard(paper)
-    return render_template("index.html", query=query, years=years, papers=papers, error=error)
+    # Papers from the last 2 years get a "New" label on the page.
+    recent_year = date.today().year - 2
+    return render_template(
+        "index.html", query=query, years=years, papers=papers, error=error, recent_year=recent_year
+    )
 
 
 @app.route("/check", methods=["GET", "POST"])

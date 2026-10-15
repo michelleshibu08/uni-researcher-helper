@@ -10,7 +10,7 @@ Writing an essay with academic sources has three fiddly steps: finding relevant 
 
 ## Features
 
-- **Search papers:** type a topic and get the top 10 papers from [OpenAlex](https://openalex.org), a free database of over 300 million academic works. Filter to the last 5 years, the last 10 years, or any time.
+- **Search papers:** type a topic and get 10 papers from [OpenAlex](https://openalex.org), a free database of over 300 million academic works. Half are the most relevant papers overall and half are the most relevant from the last 2 years (marked **New**), so recent research always shows up. Filter to the last 5 years, the last 10 years, or any time.
 - **Ready-made references:** every result comes with an **APA 7** and a **Harvard** reference, each with a one-click Copy button.
 - **Claim checker:** type what your essay says a paper shows, and the app checks it against the paper's abstract. It gives a verdict (*supported*, *partly supported*, *not supported* or *not enough info*) and quotes the sentence it based that on.
 

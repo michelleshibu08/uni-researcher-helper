@@ -134,3 +134,15 @@ blockquote {
 
 button:disabled { opacity: 0.6; cursor: wait; }
 .search select { flex: none; }
+
+.new {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--supported);
+  border-radius: 999px;
+  vertical-align: middle;
+}
