@@ -2,7 +2,7 @@
 
 A web app that helps university students **find** academic papers, **cite** them correctly, and **check** that what they say a paper shows is actually in it.
 
-![Search results with APA and Harvard references](docs/search.jpg)
+![The homepage](docs/home.jpg)
 
 ## Why I built it
 
@@ -10,12 +10,17 @@ Writing an essay with academic sources has three fiddly steps: finding relevant 
 
 ## Features
 
-- **Search papers:** type a topic and see every paper from [OpenAlex](https://openalex.org) (a free database of over 300 million academic works) with those words in its title, newest first, 25 at a time. Use **Older papers →** to keep going back in time, or filter to the last 5 or 10 years. Papers from the last 2 years are marked **New**.
-- **Ready-made references:** every result comes with an **APA 7** and a **Harvard** reference, each with a one-click Copy button, plus the short in-text citation to use inside your essay, like *(Smith et al., 2024)*.
-- **Reference list builder:** press **Save** on the papers you use, and **My references** collects them into one alphabetical list in APA or Harvard, ready to copy in one go. The list is stored in your browser, so there's no account to make.
-- **Claim checker:** paste a sentence or a whole paragraph of your essay, and the app checks each sentence against the paper's abstract. Each one gets a verdict (*supported*, *partly supported*, *not supported* or *not enough info*) and the sentence from the abstract it's based on.
-- **Fake reference detector:** paste your reference list and every entry is looked up to check the paper really exists and that the year and first author match. AI chatbots often invent convincing-looking references, so this catches them before you submit.
-- **Plain-English summary (needs a Claude key):** a button that explains the paper's abstract in simple words, without jargon.
+- **Check my essay:** paste your essay and reference list to get one report: citations with no matching reference, references you never cite, references that look made up, and claims your sources don't back up.
+- **Fake reference detector:** paste your reference list and every entry is looked up to check the paper really exists and that the year and first author match. When details are wrong, it gives you the corrected reference in your style, ready to copy. AI chatbots often invent convincing-looking references, so this catches them before you submit.
+- **Search papers:** type a topic and see every paper from [OpenAlex](https://openalex.org) (a free database of over 300 million academic works) with those words in its title, newest first, 25 at a time. Or paste a paper's link or DOI to go straight to it.
+- **References in six styles:** every paper comes with **APA 7** and **Harvard**, plus a picker for **MLA 9**, **Chicago**, **IEEE** and **OSCOLA**, each with a Copy button and the short in-text citation to use in your essay.
+- **Reference list builder:** press **Save** on the papers you use, and **My references** collects them into one list in any style, sorted the way that style requires. Copy it all at once or **download it as a Word document**. The list is stored in your browser, so there's no account to make.
+- **Claim checker:** paste a sentence or paragraph and each sentence is checked against the paper's abstract, with the sentence it's based on.
+- **Plain-English summary (needs a Claude key):** explains a paper's abstract in simple words.
+
+Free, no sign-up, no ads, and nothing you paste is saved.
+
+![An essay report](docs/essay-report.jpg)
 
 ![Checking a claim against a paper](docs/claim-check.jpg)
 
@@ -34,6 +39,7 @@ Both modes only see the abstract, not the full paper. About 1 in 4 papers in Ope
 - **OpenAlex API** for paper search and details
 - **Semantic Scholar API** (optional) to fill in missing abstracts
 - **Anthropic Claude API** for the optional meaning-based claim check
+- **python-docx** to build Word documents
 - HTML templates (Jinja) and plain CSS
 
 ## Project structure
@@ -42,9 +48,11 @@ Both modes only see the abstract, not the full paper. About 1 in 4 papers in Ope
 | --- | --- |
 | `app.py` | The Flask web app: the search page and the claim-check page |
 | `search_papers.py` | Talks to OpenAlex, retries when it's busy, converts results into a simple paper format, and fills missing abstracts from Semantic Scholar |
-| `citations.py` | Turns paper details into APA 7 and Harvard references and in-text citations |
+| `citations.py` | Turns paper details into references (APA 7, Harvard, MLA 9, Chicago, IEEE, OSCOLA) and in-text citations |
 | `claim_checker.py` | Checks a claim (or a paragraph, sentence by sentence) against an abstract, by keywords or with Claude |
 | `summary.py` | Explains an abstract in plain English with Claude |
+| `essay_checker.py` | Finds the citations in an essay and builds the full report |
+| `word_export.py` | Turns a reference list into a Word document |
 | `verify_references.py` | Checks each reference in a list is a real paper with matching details |
 | `templates/` | The HTML for each page |
 | `static/style.css` | The site's design |
@@ -94,8 +102,8 @@ python claim_checker.py
 
 - Put the app online so it can be used without installing anything
 - Automated tests for the citation formatting and the claim checker
-- More citation styles, such as MLA and Chicago
-- Export the reference list as a Word document
+- Upload an essay as a Word or PDF file instead of pasting it
+- Check claims against the full text of open-access papers, not just the abstract
 
 ## License
 

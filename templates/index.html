@@ -1,6 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% if not query %}
+  <section class="hero">
+    <h1>Write with sources you can trust</h1>
+    <p>Find academic papers, get perfect references in any style, and check your essay's sources before you hand it in.</p>
+  </section>
+{% endif %}
+
 <form class="search" action="{{ url_for('home') }}" method="get">
   <input type="text" name="q" value="{{ query }}" placeholder="Search a topic, or paste a paper's link or DOI" required autofocus>
   <select name="years" aria-label="Published">
@@ -10,6 +17,32 @@
   </select>
   <button type="submit">Search</button>
 </form>
+
+{% if not query %}
+  <p class="examples">
+    Try an example:
+    <a href="{{ url_for('home', q='social media sleep teenagers') }}">social media sleep teenagers</a>
+    <a href="{{ url_for('home', q='climate anxiety students') }}">climate anxiety students</a>
+    <a href="{{ url_for('home', q='https://doi.org/10.1038/nature04286') }}">a DOI link</a>
+  </p>
+
+  <div class="features">
+    <a class="feature" href="#top" onclick="document.querySelector('.search input').focus(); return false;">
+      <h2>Find and cite</h2>
+      <p>Search over 300 million papers and copy the reference in APA, Harvard, MLA, Chicago, IEEE or OSCOLA.</p>
+    </a>
+    <a class="feature" href="{{ url_for('essay') }}">
+      <h2>Check my essay</h2>
+      <p>One report on missing citations, unused references, and claims your sources don't back up.</p>
+    </a>
+    <a class="feature" href="{{ url_for('verify') }}">
+      <h2>Are my references real?</h2>
+      <p>AI chatbots invent references. Paste your list and find out which ones don't exist, with fixes for the rest.</p>
+    </a>
+  </div>
+
+  <p class="promise">Free · No sign-up · No ads · Nothing you paste is saved</p>
+{% endif %}
 
 {% if error %}
   <p class="message">{{ error }}</p>

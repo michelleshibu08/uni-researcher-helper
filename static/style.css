@@ -217,3 +217,54 @@ button.busy { opacity: 0.6; pointer-events: none; }
 .checklist .good::before { content: "✓"; color: var(--supported); }
 .checklist .warn::before { content: "!"; color: var(--partly); }
 .checklist .bad::before { content: "✗"; color: var(--not-supported); }
+
+/* Homepage */
+.hero { text-align: center; padding: 24px 0 8px; }
+.hero h1 { margin: 0 0 8px; font-size: 2rem; line-height: 1.2; }
+.hero p { margin: 0 auto 24px; max-width: 560px; color: var(--muted); font-size: 1.05rem; }
+
+.examples { color: var(--muted); font-size: 0.9rem; margin-top: -12px; }
+.examples a {
+  display: inline-block;
+  margin: 4px 4px 0 0;
+  padding: 2px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  text-decoration: none;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 24px 0 16px;
+}
+.feature {
+  display: block;
+  padding: 16px;
+  color: var(--text);
+  text-decoration: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.15s;
+}
+.feature:hover { border-color: var(--accent); }
+.feature h2 { margin: 0 0 6px; font-size: 1.05rem; color: var(--accent); }
+.feature p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+
+.promise { text-align: center; color: var(--muted); font-size: 0.85rem; }
+
+@media (max-width: 600px) {
+  .hero h1 { font-size: 1.5rem; }
+  .nav { margin-left: 0; width: 100%; }
+}
+.other-style { grid-template-columns: 96px 1fr auto; }
+.other-style select { width: 100%; }
+.nav { flex-wrap: wrap; }
+@media (max-width: 600px) {
+  .nav { gap: 4px 14px; font-size: 0.9rem; }
+  .other-style { grid-template-columns: 1fr; }
+  .other-style select { width: auto; justify-self: start; }
+}
