@@ -1,7 +1,7 @@
 from datetime import date
 
 import anthropic
-from flask import Flask, Response, render_template, request
+from flask import Flask, Response, redirect, render_template, request, url_for
 from requests import HTTPError, RequestException
 
 from citations import STYLES
@@ -9,8 +9,9 @@ from claim_checker import check_paragraph
 from essay_checker import check_essay
 from search_papers import get_paper, search_papers
 from summary import can_summarise, summarise
+from research_tools import related_papers, start_research
 from verify_references import check_reference_list, find_doi
-from word_export import reference_list_docx
+from word_export import essay_docx, reference_list_docx
 
 app = Flask(__name__)
 
@@ -33,15 +34,22 @@ def add_references(paper):
 
 def saved_data(paper):
     """What the Save button stores in the browser: the paper's ID plus every style."""
-    data = {"id": paper["paperId"]}
+    data = {
+        "id": paper["paperId"],
+        "title": paper["title"],
+        "year": paper.get("year"),
+        "authors": ", ".join(author["name"] for author in paper.get("authors", [])),
+        "url": paper.get("url"),
+        "hasAbstract": bool(paper.get("abstract")),
+    }
     for key in STYLES:
         data[key] = paper[key]
         data["intext_" + key] = paper["intext_" + key]
     return data
 
 
-# Let every page use STYLES and saved_data.
-app.jinja_env.globals.update(STYLES=STYLES, saved_data=saved_data)
+# Let every page use these. Papers from the last 2 years get a "New" label.
+app.jinja_env.globals.update(STYLES=STYLES, saved_data=saved_data, recent_year=date.today().year - 2)
 
 
 PER_PAGE = 25
@@ -88,8 +96,6 @@ def home():
     first = (page - 1) * PER_PAGE + 1
     last = first + len(papers) - 1
     has_older = last < total and page < MAX_PAGE
-    # Papers from the last 2 years get a "New" label on the page.
-    recent_year = date.today().year - 2
     return render_template(
         "index.html",
         query=query,
@@ -101,7 +107,6 @@ def home():
         first=first,
         last=last,
         has_older=has_older,
-        recent_year=recent_year,
     )
 
 
@@ -198,10 +203,69 @@ def download_references():
     )
 
 
+@app.route("/start")
+def start():
+    """Turn an essay question into key papers to read first."""
+    question = request.args.get("question", "").strip()
+    research = None
+    error = None
+    if question:
+        try:
+            research = start_research(question)
+        except RequestException as e:
+            error = error_message(e)
+        if research is None and not error:
+            error = "Couldn't find a topic in that question. Try writing it in a few more words."
+        if research:
+            for paper in research["reviews"] + research["classics"] + research["recent"]:
+                add_references(paper)
+    return render_template("start.html", question=question, research=research, error=error)
+
+
+@app.route("/explore/<paper_id>")
+def explore(paper_id):
+    """Show a paper with what it cites and which papers cite it."""
+    paper = None
+    references = []
+    cited_by = []
+    error = None
+    try:
+        paper = get_paper(paper_id)
+        references, cited_by = related_papers(paper_id)
+    except RequestException as e:
+        error = error_message(e)
+    for each in ([paper] if paper else []) + references + cited_by:
+        add_references(each)
+    return render_template("explore.html", paper=paper, references=references, cited_by=cited_by, error=error)
+
+
+@app.route("/project")
+def project():
+    """The essay workspace. Projects live in the browser, so the page fills itself in."""
+    return render_template("project.html")
+
+
 @app.route("/references")
 def references():
-    """The reference list. The saved papers live in the browser, so the page fills itself in."""
-    return render_template("references.html")
+    """The old reference list page is now part of the project workspace."""
+    return redirect(url_for("project") + "#references")
+
+
+@app.route("/essay/download", methods=["POST"])
+def download_essay():
+    """Send the student's draft and reference list back as a Word document."""
+    data = request.get_json(silent=True) or {}
+    file = essay_docx(
+        str(data.get("title", "My essay")),
+        str(data.get("draft", "")),
+        str(data.get("style", "harvard")),
+        [str(reference) for reference in data.get("references", [])],
+    )
+    return Response(
+        file,
+        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": "attachment; filename=essay.docx"},
+    )
 
 
 if __name__ == "__main__":

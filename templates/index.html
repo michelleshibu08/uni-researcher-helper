@@ -5,7 +5,7 @@
   <section class="hero">
     <p class="eyebrow">Free for every student · No sign-up</p>
     <h1>Write with sources you can <em>actually</em> trust</h1>
-    <p>Find academic papers, get perfect references in any style, and check your essay's sources before you hand it in.</p>
+    <p>Everything for your essay in one place: find papers, take notes, plan, write with perfect references, and check your sources before you hand it in.</p>
   </section>
 {% endif %}
 
@@ -28,12 +28,19 @@
   </p>
 
   <div class="features">
-    <a class="feature" href="#top" onclick="document.querySelector('.search input').focus(); return false;">
+    <a class="feature" href="{{ url_for('start') }}">
       <span class="icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M5 19l14-14"/><path d="M9 5h10v10"/></svg>
       </span>
-      <h2>Find and cite</h2>
-      <p>Search over 300 million papers and copy the reference in APA, Harvard, MLA, Chicago, IEEE or OSCOLA.</p>
+      <h2>Get started</h2>
+      <p>Paste your essay question and get the overviews, classic studies and latest research to read first.</p>
+    </a>
+    <a class="feature" href="{{ url_for('project') }}">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>
+      </span>
+      <h2>Your essay project</h2>
+      <p>Save sources with notes, plan your points, write with one-click citations, and download it all as Word.</p>
     </a>
     <a class="feature" href="{{ url_for('essay') }}">
       <span class="icon" aria-hidden="true">

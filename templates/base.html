@@ -13,9 +13,10 @@
   <header>
     <a class="logo" href="{{ url_for('home') }}"><span class="logo-mark">R</span>Research Helper</a>
     <nav class="nav">
+      <a href="{{ url_for('start') }}">Get started</a>
       <a href="{{ url_for('essay') }}">Check my essay</a>
-      <a href="{{ url_for('verify') }}">Check my references</a>
-      <a href="{{ url_for('references') }}">My references (<span id="saved-count">0</span>)</a>
+      <a href="{{ url_for('verify') }}">Check references</a>
+      <a class="nav-project" href="{{ url_for('project') }}">My project (<span id="saved-count">0</span>)</a>
     </nav>
   </header>
   <main>
@@ -26,26 +27,9 @@
     and <a href="https://www.semanticscholar.org" target="_blank">Semantic Scholar</a> ·
     Always double-check your references before you submit.
   </footer>
+  <script src="{{ url_for('static', filename='storage.js') }}"></script>
   <script>
-    // Saved papers are kept in this browser's storage, so there's no account to set up.
-    function loadSaved() {
-      try {
-        return JSON.parse(localStorage.getItem("savedPapers")) || [];
-      } catch (error) {
-        return [];
-      }
-    }
-
-    function saveAll(papers) {
-      try {
-        localStorage.setItem("savedPapers", JSON.stringify(papers));
-      } catch (error) {
-        // Storage can be blocked (for example in private browsing); the list just won't be kept.
-      }
-      document.getElementById("saved-count").textContent = papers.length;
-    }
-
-    document.getElementById("saved-count").textContent = loadSaved().length;
+    updateProjectCount();
 
     // Searching can take a few seconds when the API is busy, so show that it's working.
     document.querySelectorAll("form").forEach(function (form) {
@@ -78,18 +62,25 @@
       });
     });
 
-    // "Save" adds a paper to the reference list, and pressing it again removes it.
+    // "Save" adds a paper to the project you're working on; pressing it again removes it.
     document.querySelectorAll("[data-save]").forEach(function (button) {
       var paper = JSON.parse(button.dataset.save);
       function isSaved() {
-        return loadSaved().some(function (p) { return p.id === paper.id; });
+        return activeProject(loadProjects()).papers.some(function (p) { return p.id === paper.id; });
       }
       function showState() {
-        button.textContent = isSaved() ? "Saved ✓" : "Save to my references";
+        button.textContent = isSaved() ? "Saved ✓" : "Save to " + activeProject(loadProjects()).name;
       }
       button.addEventListener("click", function () {
-        var others = loadSaved().filter(function (p) { return p.id !== paper.id; });
-        saveAll(isSaved() ? others : others.concat([paper]));
+        var saved = isSaved();
+        updateActiveProject(function (project) {
+          project.papers = project.papers.filter(function (p) { return p.id !== paper.id; });
+          if (!saved) {
+            paper.status = "to_read";
+            paper.notes = "";
+            project.papers.push(paper);
+          }
+        });
         showState();
       });
       showState();

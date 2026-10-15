@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Get started · Research Helper{% endblock %}
+
+{% block content %}
+<section class="hero hero-small">
+  <p class="eyebrow">Step 1 of your essay</p>
+  <h1>What's your essay question?</h1>
+  <p>Paste it in and get the best papers to start reading: overviews of the topic, the classic studies, and the latest research.</p>
+</section>
+
+<form class="search" action="{{ url_for('start') }}" method="get">
+  <input type="text" name="question" value="{{ question }}" placeholder="e.g. To what extent does social media harm teenagers' sleep?" required autofocus>
+  <button type="submit">Get started</button>
+</form>
+
+{% if error %}
+  <p class="message">{{ error }}</p>
+{% endif %}
+
+{% if research %}
+  <section class="summary">
+    <h2>Your topic</h2>
+    <p class="details">Searching for papers about:
+      {% for term in research.terms %}<span class="chip">{{ term }}</span>{% endfor %}
+    </p>
+    <button type="button" class="secondary" id="use-question" data-question="{{ question }}">Use this as my project's essay question</button>
+    {% if research.topics %}
+      <p class="details">Angles you could explore:</p>
+      <p>
+        {% for topic in research.topics %}
+          <a class="chip chip-link" href="{{ url_for('home', q=topic) }}">{{ topic }}</a>
+        {% endfor %}
+      </p>
+    {% endif %}
+  </section>
+
+  {% set sections = [
+    ("reviews", "Read these first: overviews of the topic", "Review papers sum up lots of research in one place, so they're the quickest way to understand a topic."),
+    ("classics", "The classics", "The most-cited papers on this topic: the ones other researchers keep referring to."),
+    ("recent", "The latest research", "Well-cited papers from the last three years, so your essay is up to date."),
+  ] %}
+  {% for key, heading, explanation in sections %}
+    <h2 class="section-heading">{{ heading }}</h2>
+    <p class="details">{{ explanation }}</p>
+    {% for paper in research[key] %}
+      {% include "_paper.html" %}
+    {% else %}
+      <p class="message">No papers found for this part. Try rewording your question.</p>
+    {% endfor %}
+  {% endfor %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var useQuestion = document.getElementById("use-question");
+  if (useQuestion) {
+    useQuestion.addEventListener("click", function () {
+      var project = updateActiveProject(function (p) { p.question = useQuestion.dataset.question; });
+      useQuestion.textContent = "Saved to " + project.name + " ✓";
+    });
+  }
+</script>
+{% endblock %}

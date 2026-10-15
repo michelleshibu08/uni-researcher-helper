@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}My project · Research Helper{% endblock %}
+
+{% block content %}
+<div class="project-bar">
+  <label>
+    Project
+    <select id="project-select" aria-label="Choose a project"></select>
+  </label>
+  <button type="button" class="secondary" id="new-project">+ New project</button>
+  <button type="button" class="secondary" id="rename-project">Rename</button>
+  <button type="button" class="secondary" id="delete-project">Delete</button>
+</div>
+
+<h1 id="project-name"></h1>
+<label class="question-label" for="question">Essay question</label>
+<input type="text" id="question" class="question-input" placeholder="Type or paste your essay question">
+<p class="details">
+  Not sure where to start? <a href="{{ url_for('start') }}" id="start-link">Find papers for your question →</a>
+</p>
+
+<div class="tabs" role="tablist">
+  <button type="button" class="tab" data-tab="sources">1. Sources</button>
+  <button type="button" class="tab" data-tab="plan">2. Plan</button>
+  <button type="button" class="tab" data-tab="write">3. Write</button>
+  <button type="button" class="tab" data-tab="references">4. References</button>
+</div>
+
+{# ---------- Sources: the papers saved to this project ---------- #}
+<section class="tab-panel" id="sources">
+  <div class="filters" id="status-filters"></div>
+  <p class="message" id="no-sources" hidden>
+    No papers saved yet. <a href="{{ url_for('start') }}">Get started</a> or <a href="{{ url_for('home') }}">search</a>,
+    then press "Save" on the papers you want to use.
+  </p>
+  <div id="source-list"></div>
+</section>
+
+{# ---------- Plan: the essay's main points, each with its sources ---------- #}
+<section class="tab-panel" id="plan" hidden>
+  <p class="details">Write your essay's main points in order, and attach the papers that back each one up.</p>
+  <ol class="plan-list" id="plan-list"></ol>
+  <button type="button" id="add-point">+ Add a point</button>
+</section>
+
+{# ---------- Write: a simple writing space ---------- #}
+<section class="tab-panel" id="write" hidden>
+  <div class="toolbar">
+    <span class="word-count"><strong id="word-count">0</strong> words</span>
+    <label>Target <input type="number" id="word-target" min="0" step="100" placeholder="2000"></label>
+    <select id="cite-select" aria-label="Paper to cite"></select>
+    <button type="button" class="secondary" id="insert-citation">Insert citation</button>
+  </div>
+  <textarea id="draft" rows="22" placeholder="Start writing your essay here. It saves as you type."></textarea>
+  <div class="toolbar toolbar-bottom">
+    <button type="button" id="download-essay">Download essay as Word</button>
+    <button type="button" class="secondary" id="check-essay">Check my essay</button>
+  </div>
+  {# "Check my essay" sends the draft and reference list to the essay checker in a new tab. #}
+  <form id="check-form" action="{{ url_for('essay') }}" method="post" target="_blank" hidden>
+    <textarea name="essay"></textarea>
+    <textarea name="references"></textarea>
+  </form>
+</section>
+
+{# ---------- References: the reference list in any style ---------- #}
+<section class="tab-panel" id="references" hidden>
+  <div class="toolbar">
+    <label>
+      Style
+      <select id="style">
+        {% for key, style in STYLES.items() %}
+          <option value="{{ key }}">{{ style[0] }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="button" id="copy-all">Copy all</button>
+    <button type="button" class="secondary" id="download-references">Download as Word</button>
+  </div>
+  <p class="details" id="references-note">Only papers marked "Using" go in your reference list.</p>
+  <ol class="reference-list" id="reference-list"></ol>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Addresses the page script needs, filled in by Flask.
+  var URLS = {
+    downloadReferences: "{{ url_for('download_references') }}",
+    downloadEssay: "{{ url_for('download_essay') }}",
+    check: "{{ url_for('check') }}",
+    explore: "{{ url_for('explore', paper_id='PAPER_ID') }}",
+    start: "{{ url_for('start') }}"
+  };
+</script>
+<script src="{{ url_for('static', filename='project.js') }}"></script>
+{% endblock %}

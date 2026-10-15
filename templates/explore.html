@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Explore · Research Helper{% endblock %}
+
+{% block content %}
+<p><a href="javascript:history.back()">← Back</a></p>
+
+{% if error %}
+  <p class="message">{{ error }}</p>
+{% endif %}
+
+{% if paper %}
+  <p class="eyebrow">Exploring from this paper</p>
+  {% include "_paper.html" %}
+
+  <p class="details">
+    Researchers find more sources by following the trail: the papers this one builds on, and the newer
+    papers that build on it. Both lists start with the most-cited.
+  </p>
+
+  <div class="tabs" role="tablist">
+    <button type="button" class="tab active" data-tab="cited-by">Papers that cite it ({{ cited_by | length }})</button>
+    <button type="button" class="tab" data-tab="references">Papers it cites ({{ references | length }})</button>
+  </div>
+
+  <div class="tab-panel" id="cited-by">
+    {% for paper in cited_by %}
+      {% include "_paper.html" %}
+    {% else %}
+      <p class="message">No papers cite this one yet.</p>
+    {% endfor %}
+  </div>
+  <div class="tab-panel" id="references" hidden>
+    {% for paper in references %}
+      {% include "_paper.html" %}
+    {% else %}
+      <p class="message">OpenAlex doesn't have this paper's reference list.</p>
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Switch between the two lists.
+  document.querySelectorAll(".tab").forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      document.querySelectorAll(".tab").forEach(function (t) { t.classList.toggle("active", t === tab); });
+      document.querySelectorAll(".tab-panel").forEach(function (panel) { panel.hidden = panel.id !== tab.dataset.tab; });
+    });
+  });
+</script>
+{% endblock %}

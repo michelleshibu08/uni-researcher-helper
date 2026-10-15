@@ -10,15 +10,20 @@ Writing an essay with academic sources has three fiddly steps: finding relevant 
 
 ## Features
 
-- **Check my essay:** paste your essay and reference list to get one report: citations with no matching reference, references you never cite, references that look made up, and claims your sources don't back up.
-- **Fake reference detector:** paste your reference list and every entry is looked up to check the paper really exists and that the year and first author match. When details are wrong, it gives you the corrected reference in your style, ready to copy. AI chatbots often invent convincing-looking references, so this catches them before you submit.
-- **Search papers:** type a topic and see every paper from [OpenAlex](https://openalex.org) (a free database of over 300 million academic works) with those words in its title, newest first, 25 at a time. Or paste a paper's link or DOI to go straight to it.
-- **References in six styles:** every paper comes with **APA 7** and **Harvard**, plus a picker for **MLA 9**, **Chicago**, **IEEE** and **OSCOLA**, each with a Copy button and the short in-text citation to use in your essay.
-- **Reference list builder:** press **Save** on the papers you use, and **My references** collects them into one list in any style, sorted the way that style requires. Copy it all at once or **download it as a Word document**. The list is stored in your browser, so there's no account to make.
-- **Claim checker:** paste a sentence or paragraph and each sentence is checked against the paper's abstract, with the sentence it's based on.
-- **Plain-English summary (needs a Claude key):** explains a paper's abstract in simple words.
+Everything a student needs for an essay, in the order they need it:
 
-Free, no sign-up, no ads, and nothing you paste is saved.
+1. **Get started:** paste your essay question and get the papers to read first: review papers that sum up the topic, the most-cited classics, the latest research, and related topics to explore.
+2. **Find sources:** search over 300 million papers from [OpenAlex](https://openalex.org), newest first, or paste a paper's link or DOI. **Explore** any paper to see the papers it cites and the papers that cite it.
+3. **Your essay project:** save papers to a project, mark each one *to read*, *read*, *using* or *not using*, and keep notes on it. Make as many projects as you have essays.
+4. **Plan:** write your main points in order and attach the papers that support each one.
+5. **Write:** a writing space with a word count and target, and an **Insert citation** button that adds the in-text citation for any saved paper.
+6. **Check:**
+   - **Check my essay** gives one report on citations with no reference, references you never cite, references that look made up, and claims your sources don't back up.
+   - **Fake reference detector** looks every reference up to check it exists and the details match, and gives you a corrected version when they don't.
+   - **Claim checker** checks a sentence or paragraph against a paper's abstract.
+7. **Finish:** references in **APA 7, Harvard, MLA 9, Chicago, IEEE and OSCOLA**, and **download your essay with its reference list as a Word document**.
+
+Free, no sign-up, no ads. Projects are saved in your own browser, and nothing you paste is stored on the server.
 
 ![An essay report](docs/essay-report.jpg)
 
@@ -53,6 +58,8 @@ Both modes only see the abstract, not the full paper. About 1 in 4 papers in Ope
 | `summary.py` | Explains an abstract in plain English with Claude |
 | `essay_checker.py` | Finds the citations in an essay and builds the full report |
 | `word_export.py` | Turns a reference list into a Word document |
+| `research_tools.py` | Turns an essay question into papers to read first, and finds a paper's references and citations |
+| `static/storage.js`, `static/project.js` | Save projects in the browser and run the project workspace |
 | `verify_references.py` | Checks each reference in a list is a real paper with matching details |
 | `templates/` | The HTML for each page |
 | `static/style.css` | The site's design |
