@@ -1,12 +1,22 @@
-"""Search OpenAlex for academic papers and print the top results."""
+"""Search OpenAlex for academic papers and print the top results.
 
+If SEMANTIC_SCHOLAR_API_KEY is in your .env file, papers that OpenAlex has no
+abstract for get one from Semantic Scholar instead.
+"""
+
+import os
 import time
 
 import requests
+from dotenv import load_dotenv
 
 from citations import format_apa, format_harvard
 
+# Load secret keys from the .env file (git ignores it, so keys never reach GitHub).
+load_dotenv()
+
 WORKS_URL = "https://api.openalex.org/works"
+SEMANTIC_SCHOLAR_BATCH_URL = "https://api.semanticscholar.org/graph/v1/paper/batch"
 MAX_ATTEMPTS = 3
 # Only ask OpenAlex for the details we use, so responses stay small and fast.
 FIELDS = (
@@ -15,12 +25,20 @@ FIELDS = (
 )
 
 
-def get_json(url, params):
-    """Download data from OpenAlex, waiting and retrying if it's busy."""
+def get_json(url, params, body=None, headers=None):
+    """Download data from an API, waiting and retrying if it's busy.
+
+    With a body, the data is sent as a POST request instead of a GET.
+    """
     for attempt in range(1, MAX_ATTEMPTS + 1):
-        response = requests.get(url, params=params, timeout=10)
-        # 429 means "too many requests": the API is busy, so wait and retry.
-        if response.status_code != 429 or attempt == MAX_ATTEMPTS:
+        if body is None:
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+        else:
+            response = requests.post(url, params=params, json=body, headers=headers, timeout=10)
+        # 429 means "too many requests" and 5xx means a server hiccup: both are
+        # usually temporary, so wait and try again.
+        busy = response.status_code == 429 or response.status_code >= 500
+        if not busy or attempt == MAX_ATTEMPTS:
             break
         print("API is busy, retrying in " + str(attempt * 2) + " seconds...")
         time.sleep(attempt * 2)
@@ -66,6 +84,35 @@ def to_paper(work):
     }
 
 
+def fill_missing_abstracts(papers):
+    """Ask Semantic Scholar for any abstracts OpenAlex didn't have.
+
+    This is only a backup: without a key, or if Semantic Scholar fails,
+    the papers are left as they were.
+    """
+    api_key = os.environ.get("SEMANTIC_SCHOLAR_API_KEY")
+    missing = [p for p in papers if not p["abstract"] and p["externalIds"].get("DOI")]
+    if not api_key or not missing:
+        return
+
+    # One request for all the papers at once, looked up by their DOI.
+    ids = ["DOI:" + p["externalIds"]["DOI"] for p in missing]
+    try:
+        results = get_json(
+            SEMANTIC_SCHOLAR_BATCH_URL,
+            {"fields": "abstract"},
+            body={"ids": ids},
+            headers={"x-api-key": api_key},
+        )
+    except requests.RequestException:
+        return
+
+    # Results come back in the same order as the IDs; a paper it doesn't know is None.
+    for paper, result in zip(missing, results):
+        if result and result.get("abstract"):
+            paper["abstract"] = result["abstract"]
+
+
 def search_papers(query, limit=10, since_year=None):
     """Return a list of papers (as dicts) matching the search query.
 
@@ -75,12 +122,16 @@ def search_papers(query, limit=10, since_year=None):
     if since_year:
         params["filter"] = "from_publication_date:" + str(since_year) + "-01-01"
     data = get_json(WORKS_URL, params)
-    return [to_paper(work) for work in data.get("results", [])]
+    papers = [to_paper(work) for work in data.get("results", [])]
+    fill_missing_abstracts(papers)
+    return papers
 
 
 def get_paper(paper_id):
     """Download one paper by its OpenAlex ID, like "W2626778328"."""
-    return to_paper(get_json(WORKS_URL + "/" + paper_id, {"select": FIELDS}))
+    paper = to_paper(get_json(WORKS_URL + "/" + paper_id, {"select": FIELDS}))
+    fill_missing_abstracts([paper])
+    return paper
 
 
 def main():
