@@ -90,14 +90,21 @@ header {
 }
 
 .logo-mark {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: linear-gradient(135deg, var(--accent), var(--highlight));
-  color: #ffffff;
-  font-size: 1rem;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+  transition: transform 0.2s;
+}
+.logo:hover .logo-mark { transform: rotate(-8deg) scale(1.05); }
+.logo { font-size: 1.3rem; letter-spacing: -0.02em; }
+
+/* "-ify" in the same purple-to-coral gradient as the logo. */
+.logo-ify {
+  background: linear-gradient(90deg, #7c3aed, var(--highlight));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .nav { margin-left: auto; display: flex; flex-wrap: wrap; gap: 4px; }

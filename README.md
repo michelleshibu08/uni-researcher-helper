@@ -1,4 +1,6 @@
-# Research Helper
+<img src="static/logo.svg" alt="Researchify logo" width="72">
+
+# Researchify
 
 A web app that helps university students **find** academic papers, **cite** them correctly, and **check** that what they say a paper shows is actually in it.
 

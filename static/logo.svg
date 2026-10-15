@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Researchify logo">
+  <!-- Researchify: a magnifying glass (finding sources) with a tick in the lens (checking them). -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4338ca"/>
+      <stop offset="0.55" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#ff8a5b"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#bg)"/>
+  <rect width="64" height="32" rx="16" fill="url(#shine)"/>
+  <!-- Lens and handle -->
+  <circle cx="28" cy="28" r="14" fill="none" stroke="#ffffff" stroke-width="5"/>
+  <path d="M38.5 38.5 L49 49" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  <!-- Tick -->
+  <path d="M21.5 28.5 L26.5 33.5 L35 23.5" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Small spark: the "-ify" magic -->
+  <path d="M50 10 l1.6 4.4 4.4 1.6 -4.4 1.6 -1.6 4.4 -1.6 -4.4 -4.4 -1.6 4.4 -1.6 z" fill="#ffffff"/>
+</svg>
