@@ -3,7 +3,8 @@
 {% block content %}
 {% if not query %}
   <section class="hero">
-    <h1>Write with sources you can trust</h1>
+    <p class="eyebrow">Free for every student · No sign-up</p>
+    <h1>Write with sources you can <em>actually</em> trust</h1>
     <p>Find academic papers, get perfect references in any style, and check your essay's sources before you hand it in.</p>
   </section>
 {% endif %}
@@ -21,21 +22,30 @@
 {% if not query %}
   <p class="examples">
     Try an example:
-    <a href="{{ url_for('home', q='social media sleep teenagers') }}">social media sleep teenagers</a>
-    <a href="{{ url_for('home', q='climate anxiety students') }}">climate anxiety students</a>
+    <a href="{{ url_for('home', q='social media sleep') }}">social media sleep</a>
+    <a href="{{ url_for('home', q='exam stress students') }}">exam stress students</a>
     <a href="{{ url_for('home', q='https://doi.org/10.1038/nature04286') }}">a DOI link</a>
   </p>
 
   <div class="features">
     <a class="feature" href="#top" onclick="document.querySelector('.search input').focus(); return false;">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      </span>
       <h2>Find and cite</h2>
       <p>Search over 300 million papers and copy the reference in APA, Harvard, MLA, Chicago, IEEE or OSCOLA.</p>
     </a>
     <a class="feature" href="{{ url_for('essay') }}">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 13l2 2 4-4"/></svg>
+      </span>
       <h2>Check my essay</h2>
       <p>One report on missing citations, unused references, and claims your sources don't back up.</p>
     </a>
     <a class="feature" href="{{ url_for('verify') }}">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      </span>
       <h2>Are my references real?</h2>
       <p>AI chatbots invent references. Paste your list and find out which ones don't exist, with fixes for the rest.</p>
     </a>

@@ -4,12 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Research Helper{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <header>
-    <a class="logo" href="{{ url_for('home') }}">Research Helper</a>
-    <span class="tagline">Find, cite and check academic papers</span>
+    <a class="logo" href="{{ url_for('home') }}"><span class="logo-mark">R</span>Research Helper</a>
     <nav class="nav">
       <a href="{{ url_for('essay') }}">Check my essay</a>
       <a href="{{ url_for('verify') }}">Check my references</a>
@@ -19,6 +21,11 @@
   <main>
     {% block content %}{% endblock %}
   </main>
+  <footer>
+    Research Helper · Paper data from <a href="https://openalex.org" target="_blank">OpenAlex</a>
+    and <a href="https://www.semanticscholar.org" target="_blank">Semantic Scholar</a> ·
+    Always double-check your references before you submit.
+  </footer>
   <script>
     // Saved papers are kept in this browser's storage, so there's no account to set up.
     function loadSaved() {
