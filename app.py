@@ -8,7 +8,7 @@ from citations import STYLES
 from claim_checker import check_paragraph
 from search_papers import get_paper, search_papers
 from summary import can_summarise, summarise
-from verify_references import check_reference_list
+from verify_references import check_reference_list, find_doi
 
 app = Flask(__name__)
 
@@ -61,15 +61,27 @@ def home():
     papers = []
     total = 0
     error = None
-    if query:
+    # A pasted DOI or link (like https://doi.org/10.1038/nature04286) goes straight to that paper.
+    doi = find_doi(query)
+    if query and doi:
+        try:
+            papers, total = [get_paper("doi:" + doi)], 1
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                error = "Couldn't find a paper with the DOI " + doi + ". Check the link, or search by title instead."
+            else:
+                error = error_message(e)
+        except RequestException as e:
+            error = error_message(e)
+    elif query:
         try:
             papers, total = search_papers(query, page=page, per_page=PER_PAGE, since_year=since_year)
         except RequestException as e:
             error = error_message(e)
         if not papers and not error:
             error = "No papers found. Try different keywords."
-        for paper in papers:
-            add_references(paper)
+    for paper in papers:
+        add_references(paper)
 
     first = (page - 1) * PER_PAGE + 1
     last = first + len(papers) - 1

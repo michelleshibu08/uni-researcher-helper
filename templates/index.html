@@ -2,7 +2,7 @@
 
 {% block content %}
 <form class="search" action="{{ url_for('home') }}" method="get">
-  <input type="text" name="q" value="{{ query }}" placeholder="What topic are you researching?" required autofocus>
+  <input type="text" name="q" value="{{ query }}" placeholder="Search a topic, or paste a paper's link or DOI" required autofocus>
   <select name="years" aria-label="Published">
     <option value="" {% if years == "" %}selected{% endif %}>Any time</option>
     <option value="10" {% if years == "10" %}selected{% endif %}>Last 10 years</option>
